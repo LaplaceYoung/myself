@@ -1,4 +1,4 @@
-import { BrowserRouter } from 'react-router-dom';
+import { HashRouter } from 'react-router-dom';
 import { AnimatedRoutes } from './components/AnimatedRoutes';
 import Logo from './components/Logo';
 import CustomCursor from './components/CustomCursor';
@@ -8,7 +8,7 @@ import { LanguageProvider } from './LanguageContext';
 
 function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <LanguageProvider>
         <LenisProvider>
           <CustomCursor />
@@ -17,7 +17,7 @@ function App() {
           <AnimatedRoutes />
         </LenisProvider>
       </LanguageProvider>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
