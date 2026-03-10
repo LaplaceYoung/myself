@@ -1,73 +1,98 @@
-# React + TypeScript + Vite
+# Organic Editorial — Personal Homepage
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> A premium, magazine-style personal portfolio & curation platform built with a focus on editorial aesthetics and liquid interactions.
 
-Currently, two official plugins are available:
+[![Deploy to GitHub Pages](https://github.com/LaplaceYoung/myself/actions/workflows/deploy.yml/badge.svg)](https://github.com/LaplaceYoung/myself/actions/workflows/deploy.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 📖 Design Philosophy
 
-## React Compiler
+This project moves away from generic "AI-generated" aesthetics (monotone backgrounds, standard rounded cards) to embrace an **"Organic Editorial"** vibe:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Surface & Texture**: A custom `#F7F5F0` parchment background with a subtle SVG noise overlay for a tactile, paper-like feel.
+- **Typography Tension**: High-contrast pairing of elegant serifs (`Playfair Display`) and clean, modern sans-serifs (`Plus Jakarta Sans`).
+- **Liquid Interactivity**: Custom smooth-scrolling (`Lenis`), parallax reveals, and physics-based interactions powered by `Framer Motion`.
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🛠 Tech Stack
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- **Frontend**: React 19 + TypeScript
+- **Styling**: CSS Modules (Vanilla CSS for maximum control)
+- **Animation**: Framer Motion
+- **Scrolling**: Studio Freight Lenis
+- **Bundler**: Vite
+- **CMS**: Local Node.js Meta-Scraper (Admin OS)
+- **Deployment**: GitHub Actions
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 🖥 The "Local CMS" Workflow (Admin OS)
+
+Since GitHub Pages is a static host, this project utilizes a **Remote Cloud + Local Management** hybrid architecture.
+
+### 1. Local Management
+
+Run the local Admin OS to manage your writings and curations:
+
+```bash
+npm run admin
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The Admin Panel features:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- **Intelligent Scraping**: Auto-fetch metadata and high-definition covers from Douban, TMDB, and Google Books.
+- **Markdown Studio**: A robust split-pane Markdown editor with direct drag-and-drop/paste image upload support.
+- **Content Persistence**: Automatically updates `src/data/content.json` and saves assets to `public/uploads/`.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 2. Live Sync
+
+1. Edit content locally via Admin OS.
+2. Commit and push: `git add . && git commit -m "update logs" && git push`.
+3. GitHub Actions will automatically rebuild the site and deploy it to GitHub Pages.
+
+---
+
+## 🚀 Quick Start
+
+### Installation
+
+```bash
+npm install
 ```
+
+### Development
+
+```bash
+# Start both Vite dev server and Admin backend
+npm run admin
+```
+
+### Static Build
+
+```bash
+npm run build
+```
+
+---
+
+## 🏗 Directory Structure
+
+```text
+├── .github/workflows/    # CI/CD Pipeline
+├── scripts/              # CMS Backend & Scrapers
+├── src/
+│   ├── components/       # Editorial UI Components
+│   ├── data/             # Content JSON (The Database)
+│   ├── pages/            # Route Views
+│   └── main.tsx          # App Entry
+├── public/
+│   └── uploads/          # Locally managed image assets
+└── gemini.md             # AI Memory & Dev Logs (Internal)
+```
+
+---
+
+## ⚖️ License
+
+Distributed under the MIT License. Styled with ❤️ for the open-web.
