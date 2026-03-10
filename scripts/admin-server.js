@@ -591,7 +591,7 @@ app.post('/api/upload', verifyPassword, async (req, res) => {
 
         await fsp.writeFile(filePath, base64Data, 'base64');
 
-        res.json({ url: `/uploads/${safeName}` });
+        res.json({ url: `uploads/${safeName}` });
     } catch (e) {
         console.error("Upload Error:", e);
         res.status(500).json({ error: 'Image upload failed' });

@@ -93,7 +93,7 @@ const HeroSection = () => {
                 >
                     {/* High-end Abstract Video Background */}
                     <video
-                        src="/uploads/hero_bg_video.mp4"
+                        src="uploads/hero_bg_video.mp4"
                         className={styles.heroImage}
                         autoPlay
                         loop
