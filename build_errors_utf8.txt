@@ -1,0 +1,15 @@
+src/components/WritingsSection.tsx(48,53): error TS2339: Property 'id' does not exist on type 'never'.
+src/components/WritingsSection.tsx(49,42): error TS2339: Property 'id' does not exist on type 'never'.
+src/components/WritingsSection.tsx(65,79): error TS2339: Property 'title' does not exist on type 'never'.
+src/components/WritingsSection.tsx(68,80): error TS2339: Property 'category' does not exist on type 'never'.
+src/components/WritingsSection.tsx(69,76): error TS2339: Property 'date' does not exist on type 'never'.
+src/components/WritingsSection.tsx(90,38): error TS2339: Property 'id' does not exist on type 'never'.
+src/components/WritingsSection.tsx(91,38): error TS2339: Property 'image' does not exist on type 'never'.
+src/components/WritingsSection.tsx(92,38): error TS2339: Property 'title' does not exist on type 'never'.
+src/pages/WritingDetail.tsx(14,42): error TS2339: Property 'id' does not exist on type 'never'.
+src/pages/WritingDetail.tsx(47,68): error TS2339: Property 'category' does not exist on type 'never'.
+src/pages/WritingDetail.tsx(48,64): error TS2339: Property 'date' does not exist on type 'never'.
+src/pages/WritingDetail.tsx(50,59): error TS2339: Property 'title' does not exist on type 'never'.
+src/pages/WritingDetail.tsx(54,22): error TS2339: Property 'image' does not exist on type 'never'.
+src/pages/WritingDetail.tsx(57,43): error TS2339: Property 'image' does not exist on type 'never'.
+src/pages/WritingDetail.tsx(57,63): error TS2339: Property 'title' does not exist on type 'never'.

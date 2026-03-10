@@ -1,0 +1,199 @@
+:root {
+  /* Color Palette - Organic Editorial */
+  --bg-color: #F7F5F0;
+  /* Warm parchment white */
+  --text-main: #2C2C2C;
+  /* Deep charcoal */
+  --text-muted: #6B685F;
+  /* Soft earthy gray */
+  --accent: #B85C38;
+  /* Burnt terracotta / caramel */
+  --border-light: rgba(44, 44, 44, 0.1);
+  --noise-opacity: 0.04;
+
+  /* Typography */
+  --font-serif: 'Playfair Display', 'Noto Serif SC', serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+
+  /* Layout */
+  --container-width: 1400px;
+  --space-sm: 1rem;
+  --space-md: 2rem;
+  --space-lg: 4rem;
+  --space-xl: 8rem;
+  --space-xxl: 12rem;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  position: relative;
+}
+
+#root {
+  overflow-x: clip;
+  /* Prefer clip over hidden for performance and avoiding scroll lock */
+  width: 100%;
+}
+
+/* Organic Aura Layer Spotlight */
+body::before {
+  content: "";
+  position: fixed;
+  top: -30vh;
+  left: -20vw;
+  width: 140vw;
+  height: 160vh;
+  /* Enhance aura to be warmer and more organic */
+  background: radial-gradient(circle at 50% 50%, rgba(184, 92, 56, 0.05) 0%, rgba(184, 92, 56, 0.01) 30%, transparent 70%);
+  z-index: -1;
+  pointer-events: none;
+  animation: auraBreathe 12s ease-in-out infinite alternate;
+}
+
+@keyframes auraBreathe {
+  0% {
+    transform: scale(1) translate(0%, 0%);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(1.05) translate(2%, 2%);
+    opacity: 1;
+  }
+}
+
+@keyframes noiseMove {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  10% {
+    transform: translate(-5%, -10%);
+  }
+
+  20% {
+    transform: translate(-15%, 5%);
+  }
+
+  30% {
+    transform: translate(7%, -25%);
+  }
+
+  40% {
+    transform: translate(20%, 25%);
+  }
+
+  50% {
+    transform: translate(-25%, 10%);
+  }
+
+  60% {
+    transform: translate(15%, 5%);
+  }
+
+  70% {
+    transform: translate(0%, 15%);
+  }
+
+  80% {
+    transform: translate(25%, 35%);
+  }
+
+  90% {
+    transform: translate(-10%, 10%);
+  }
+
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+/* Noise overlay technique for organic paper feel */
+body::after {
+  content: "";
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  pointer-events: none;
+  z-index: 9998;
+  /* Under layer elements like cursor */
+  opacity: var(--noise-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  animation: noiseMove 8s steps(10) infinite;
+  will-change: transform;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  line-height: 1.1;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background-color: var(--accent);
+  color: white;
+}
+
+.container {
+  max-width: var(--container-width);
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Base utility classes for motion / layout */
+.editorial-title {
+  font-size: clamp(4rem, 12vw, 10rem);
+  font-weight: 400;
+  font-style: italic;
+  display: flex;
+  flex-wrap: wrap;
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+}
+
+.section-padding {
+  padding: var(--space-xl) 0;
+}
+
+/* Hide scrollbar for gallery sections but allow scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+/* Blend Text Utility for intense typography contrast */
+.blend-text {
+  mix-blend-mode: exclusion;
+  color: #fff;
+}

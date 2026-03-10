@@ -1,0 +1,125 @@
+.dockWrapper {
+    position: fixed;
+    bottom: 2.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    pointer-events: none;
+    /* Only the container inside should catch hits */
+}
+
+.dockContainer {
+    pointer-events: auto;
+    background: rgba(247, 245, 240, 0.7);
+    /* Parchment white with transparency */
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 0.5px solid rgba(0, 0, 0, 0.1);
+    border-radius: 100px;
+    padding: 0.5rem;
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 20px 40px -10px rgba(0, 0, 0, 0.15);
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    min-width: 180px;
+    display: flex;
+    justify-content: center;
+}
+
+.dockContainer.expanded {
+    min-width: 320px;
+    padding: 0.5rem 1rem;
+    background: rgba(247, 245, 240, 0.85);
+}
+
+.dockContent {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.mainLinks {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex: 1;
+}
+
+.navItem {
+    position: relative;
+    padding: 0.5rem 0.75rem;
+    text-decoration: none;
+    color: #1a1a1a;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    border-radius: 100px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+}
+
+.navItem:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.navItem.active {
+    color: var(--accent);
+}
+
+.itemLabel {
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.activeDot {
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 3px;
+    height: 3px;
+    background: var(--accent);
+    border-radius: 50%;
+}
+
+.divider {
+    width: 1px;
+    height: 16px;
+    background: rgba(0, 0, 0, 0.1);
+    margin: 0 0.5rem;
+}
+
+.langToggle {
+    background: none;
+    border: none;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+.langToggle:hover {
+    opacity: 0.6;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .dockWrapper {
+        bottom: 1.5rem;
+    }
+
+    .dockContainer {
+        min-width: auto;
+    }
+
+    .dockContainer.expanded {
+        min-width: auto;
+    }
+}
