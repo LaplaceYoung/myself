@@ -1,225 +1,197 @@
 .curationsSection {
-    position: relative;
-    padding: var(--space-xxl) 0;
-    background-color: var(--text-main);
-    color: var(--bg-color);
+  padding: var(--space-2xl) 0;
+  background: var(--surface-ink);
+  color: var(--surface-paper);
+  overflow: hidden;
 }
 
 .header {
-    padding: 0 var(--space-xl);
-    margin-bottom: var(--space-xl);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 28rem);
+  gap: var(--space-lg);
+  align-items: end;
+  margin-bottom: var(--space-xl);
 }
 
-.title {
-    font-family: var(--font-serif);
-    font-size: clamp(2rem, 5vw, 4rem);
-    font-weight: 400;
-    color: var(--bg-color);
-    margin-bottom: var(--space-sm);
+.headerCopy {
+  display: grid;
+  gap: var(--space-sm);
 }
 
-.subtitle {
-    font-family: var(--font-sans);
-    font-size: 1rem;
-    opacity: 0.7;
-    max-width: 300px;
+.curationsSection :global(.section-kicker),
+.curationsSection :global(.section-copy) {
+  color: color-mix(in oklab, var(--surface-paper) 72%, var(--accent-electric));
 }
 
 .horizontalScroll {
-    display: flex;
-    gap: var(--space-lg);
-    padding: 0 var(--space-xl);
-    overflow-x: auto;
-    /* Hide scrollbar */
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    scroll-behavior: auto;
-    /* Required for custom smooth delta to not be jerky */
-}
-
-.horizontalScroll::-webkit-scrollbar {
-    display: none;
+  display: flex;
+  gap: var(--space-md);
+  padding: 0 max(var(--space-md), calc((100vw - var(--container-width)) / 2 + var(--space-md)));
+  overflow-x: auto;
 }
 
 .card {
-    display: flex;
-    flex-direction: column;
-    width: 350px;
-    flex-shrink: 0;
-    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-    transform-origin: center center;
-    position: relative;
-    will-change: transform, opacity, filter;
+  width: min(32rem, 78vw);
+  flex-shrink: 0;
+  display: grid;
+  grid-template-rows: minmax(18rem, 26rem) auto;
+  background: color-mix(in oklab, var(--surface-hero) 40%, black);
+  color: var(--surface-paper);
+  text-align: left;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* Dim all cards when the container is hovered, UNLESS it's the specific hovered card */
-.horizontalScroll:hover .card:not(:hover) {
-    opacity: 0.3;
-    filter: saturate(0) blur(4px);
-    transform: scale(0.95);
-}
-
-.card:hover {
-    transform: scale(1.02);
-    z-index: 10;
-}
-
-.imageWrapper {
-    width: 100%;
-    aspect-ratio: 3/4;
-    overflow: hidden;
-    margin-bottom: var(--space-md);
-    border-radius: 4px;
+.cardMedia {
+  overflow: hidden;
+  background: var(--surface-hero);
 }
 
 .image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 600ms var(--ease-out-expo);
 }
 
 .card:hover .image {
-    transform: scale(1.1);
+  transform: scale(1.05);
 }
 
-.meta {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+.cardBody {
+  display: grid;
+  gap: 0.85rem;
+  padding: var(--space-md);
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  min-width: 0;
+}
+
+.cardTopline,
+.modalTopline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.type,
+.cardLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
 
 .type {
-    font-family: var(--font-sans);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--accent);
+  color: color-mix(in oklab, var(--surface-paper) 68%, var(--accent-electric));
+}
+
+.cardLabel {
+  color: color-mix(in oklab, var(--surface-paper) 55%, transparent);
 }
 
 .itemName {
-    font-family: var(--font-serif);
-    font-size: 1.5rem;
-    font-weight: 400;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 0.96;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
-/* Fallback for horizontal scroll on touch devices without huge height */
-@media (max-width: 768px) {
-    .curationsSection {
-        padding: var(--space-xl) 0;
-    }
-
-    .horizontalScroll {
-        scroll-snap-type: x mandatory;
-        gap: var(--space-md);
-    }
-
-    .card {
-        scroll-snap-align: center;
-        width: 80vw;
-    }
+.cardDescription {
+  color: color-mix(in oklab, var(--surface-paper) 76%, transparent);
+  line-height: 1.8;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-/* Modal Styles */
 .modalOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.85);
-    z-index: 20000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(15px);
-    pointer-events: auto;
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  display: grid;
+  place-items: center;
+  padding: var(--space-md);
+  background: rgba(12, 10, 10, 0.78);
+  backdrop-filter: blur(10px);
 }
 
 .modalContent {
-    background: var(--bg-color);
-    color: var(--text-main);
-    width: 95%;
-    max-width: 1000px;
-    height: auto;
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-    border-radius: 2px;
-    overflow: hidden;
-    position: relative;
-    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+  width: min(100%, 66rem);
+  display: grid;
+  grid-template-columns: minmax(18rem, 0.95fr) minmax(0, 1fr);
+  background: var(--surface-paper);
+  color: var(--surface-ink);
+  overflow: hidden;
 }
 
-@media (min-width: 768px) {
-    .modalContent {
-        flex-direction: row;
-        height: 600px;
-    }
+.modalImageWrap {
+  min-height: 24rem;
+  background: var(--surface-hero);
+}
 
-    .modalImage {
-        width: 55%;
-        height: 100%;
-    }
+.modalImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .modalMeta {
-    padding: var(--space-xl);
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    flex: 1;
-    overflow-y: auto;
-    height: 100%;
-    -webkit-overflow-scrolling: touch;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    background-size: 200px;
-    opacity: 0.98;
+  display: grid;
+  align-content: start;
+  gap: var(--space-md);
+  padding: var(--space-lg);
 }
 
-.modalMeta .itemName {
-    font-size: clamp(2rem, 4vw, 3rem);
-    line-height: 1.1;
-    margin-bottom: var(--space-md);
-    font-family: var(--font-serif);
+.modalTitle {
+  font-size: clamp(2.2rem, 4.5vw, 4rem);
+  line-height: 0.95;
+  text-wrap: balance;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .modalDesc {
-    margin-top: var(--space-md);
-    font-family: var(--font-sans);
-    line-height: 1.8;
-    color: var(--text-muted);
-    font-size: 1.05rem;
-    position: relative;
-    padding-left: 2rem;
-}
-
-.modalDesc::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0.7em;
-    width: 1rem;
-    height: 1px;
-    background: var(--accent);
+  font-size: 1rem;
+  line-height: 1.9;
+  color: var(--text-muted);
 }
 
 .closeBtn {
-    position: absolute;
-    top: var(--space-lg);
-    right: var(--space-lg);
-    background: none;
-    border: none;
-    font-family: var(--font-serif);
-    font-size: 1rem;
-    font-style: italic;
-    cursor: pointer;
-    color: var(--text-main);
-    z-index: 10;
-    padding: 0.5rem;
-    transition: opacity 0.3s;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
-.closeBtn:hover {
-    opacity: 0.5;
+@media (max-width: 980px) {
+  .header {
+    grid-template-columns: 1fr;
+  }
+
+  .horizontalScroll {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+
+  .modalContent {
+    grid-template-columns: 1fr;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 680px) {
+  .card {
+    width: 84vw;
+    grid-template-rows: 22rem auto;
+  }
+
+  .modalMeta {
+    padding: var(--space-md);
+  }
 }

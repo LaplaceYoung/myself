@@ -1,111 +1,113 @@
-import { useState, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { motion, useInView, useSpring, useVelocity, useTransform } from 'framer-motion';
+import { AnimatePresence, motion, useInView } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useRef, useState } from 'react';
 import styles from './WritingsSection.module.css';
 import { useLanguage } from '../LanguageContext';
 import { writingsData as writings } from '../data/content';
+import { applyFallbackImage, resolveImageUrl } from '../utils/image';
 
 const WritingsSection = () => {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const isInView = useInView(containerRef, { once: true, margin: "-10% 0px" });
+  const ref = useRef<HTMLElement>(null);
+  const isInView = useInView(ref, { once: true, margin: '-10% 0px' });
+  const { t } = useLanguage();
+  const visibleWritings = writings.filter((item) => item.status === 'published');
+  const [activeIndex, setActiveIndex] = useState(0);
 
-    const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  const activeWriting = visibleWritings[activeIndex] ?? visibleWritings[0];
 
-    const mouseX = useSpring(0, { stiffness: 100, damping: 25 });
-    const mouseY = useSpring(0, { stiffness: 100, damping: 25 });
+  if (visibleWritings.length === 0) {
+    return null;
+  }
 
-    // Calculate tilt based on horizontal mouse movement speed
-    const xVelocity = useVelocity(mouseX);
-    // Smooth the tilt using spring or just direct transform. Use direct for immediate responsiveness.
-    const rotate = useTransform(xVelocity, [-1000, 0, 1000], [-15, 0, 15]);
+  return (
+    <section className={styles.writingsWrapper} ref={ref}>
+      <div className="container">
+        <motion.div
+          className={styles.header}
+          initial={{ opacity: 0, y: 24 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <div className={styles.headerCopy}>
+            <span className="section-kicker">{t('writings.eyebrow')}</span>
+            <h2 className="section-title-display">{t('writings.title')}</h2>
+          </div>
+          <div className={styles.headerMeta}>
+            <p className="section-copy">{t('writings.subtitle')}</p>
+            <span className={styles.countBadge}>
+              {visibleWritings.length} {t('writings.badge')}
+            </span>
+          </div>
+        </motion.div>
 
-    const { t } = useLanguage();
+        <div className={styles.layout}>
+          <div className={styles.listColumn}>
+            {visibleWritings.map((writing, index) => {
+              const isActive = activeIndex === index;
 
-    useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
-            // Adjust offset so image is centered on cursor or slightly offset
-            mouseX.set(e.clientX - 150);
-            mouseY.set(e.clientY - 200);
-        };
-
-        window.addEventListener("mousemove", handleMouseMove);
-        return () => {
-            window.removeEventListener("mousemove", handleMouseMove);
-        };
-    }, [mouseX, mouseY]);
-
-    return (
-        <section className={styles.writingsWrapper} ref={containerRef}>
-            <div className="container">
-                <motion.div
-                    className={styles.header}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                    transition={{ duration: 0.8 }}
+              return (
+                <Link
+                  key={writing.id}
+                  to={`/writing/${writing.id}`}
+                  className={`${styles.listItem} ${isActive ? styles.active : ''}`}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onFocus={() => setActiveIndex(index)}
                 >
-                    <h2 className={styles.title}>{t('writings.title')}</h2>
-                    <span className={styles.badge}>{writings.length} {t('writings.badge')}</span>
-                </motion.div>
+                  <span className={styles.itemIndex}>{String(index + 1).padStart(2, '0')}</span>
+                  <div className={styles.itemMain}>
+                    <div className={styles.itemMeta}>
+                      <span>{writing.category}</span>
+                      <span>{writing.date}</span>
+                    </div>
+                    <h3 className={styles.itemTitle}>{writing.title}</h3>
+                    <p className={styles.itemExcerpt}>{writing.excerpt}</p>
+                  </div>
+                  <span className={styles.itemCta}>{t('writings.cta')}</span>
+                </Link>
+              );
+            })}
+          </div>
 
-                <div className={styles.listContainer}>
-                    {writings.map((writing, idx) => (
-                        <Link
-                            to={`/writing/${writing.id}`}
-                            key={writing.id}
-                            className={styles.listItem}
-                            onMouseEnter={() => setHoveredIdx(idx)}
-                            onMouseLeave={() => setHoveredIdx(null)}
-                        // We need to disable framer-motion props if Link is not a motion component,
-                        // OR we can use motion(Link) or wrap it.
-                        // Better yet, just wrap motion.div inside the Link, or make the Link the child.
-                        >
-                            <motion.div
-                                style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
-                                transition={{ duration: 0.6, delay: idx * 0.1 }}
-                            >
-                                <div className={styles.itemLeft}>
-                                    <span className={styles.index}>0{idx + 1}</span>
-                                    <h3 className={styles.itemTitle}>{writing.title}</h3>
-                                </div>
-                                <div className={styles.itemRight}>
-                                    <span className={styles.category}>{writing.category}</span>
-                                    <span className={styles.date}>{writing.date}</span>
-                                </div>
-                            </motion.div>
-                        </Link>
-                    ))}
+          <div className={styles.previewColumn}>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeWriting.id}
+                className={styles.previewCard}
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -18 }}
+                transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+              >
+                {activeWriting.image ? (
+                  <div className={styles.previewImageWrap}>
+                    <img
+                      src={resolveImageUrl(activeWriting.image)}
+                      alt={activeWriting.title}
+                      className={styles.previewImage}
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                      onError={(event) => applyFallbackImage(event.currentTarget)}
+                    />
+                  </div>
+                ) : null}
+                <div className={styles.previewBody}>
+                  <div className={styles.previewMeta}>
+                    <span>{activeWriting.category}</span>
+                    <span>{activeWriting.date}</span>
+                  </div>
+                  <h3 className={styles.previewTitle}>{activeWriting.title}</h3>
+                  <p className={styles.previewExcerpt}>{activeWriting.excerpt}</p>
+                  <Link to={`/writing/${activeWriting.id}`} className="ghost-link">
+                    {t('writings.cta')}
+                  </Link>
                 </div>
-            </div>
-
-            {/* Hover Image Reveal (Fixed positioned, follows mouse) */}
-            {createPortal(
-                <motion.div
-                    className={styles.cursorImageContainer}
-                    style={{
-                        x: mouseX,
-                        y: mouseY,
-                        rotate: rotate,
-                        opacity: hoveredIdx !== null ? 1 : 0,
-                        scale: hoveredIdx !== null ? 1 : 0.8,
-                    }}
-                    transition={{ opacity: { duration: 0.3 }, scale: { duration: 0.3 } }}
-                >
-                    {writings.map((writing, idx) => (
-                        <img
-                            key={writing.id}
-                            src={writing.image}
-                            alt={writing.title}
-                            className={`${styles.cursorImage} ${hoveredIdx === idx ? styles.active : ''}`}
-                        />
-                    ))}
-                </motion.div>,
-                document.body
-            )}
-        </section>
-    );
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 };
 
 export default WritingsSection;

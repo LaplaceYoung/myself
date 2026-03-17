@@ -1,172 +1,248 @@
 .projectsWrapper {
-    padding: var(--space-xl) 0;
-    background-color: var(--bg-color);
+  padding: var(--space-2xl) 0;
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--surface-paper) 90%, white) 0%, var(--surface-paper) 65%),
+    var(--surface-paper);
 }
 
 .header {
-    margin-bottom: var(--space-xl);
-    display: flex;
-    justify-content: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 28rem);
+  gap: var(--space-lg);
+  align-items: end;
+  margin-bottom: var(--space-xl);
 }
 
-.sectionTitle {
-    font-family: var(--font-serif);
-    font-size: clamp(2rem, 5vw, 4rem);
-    font-weight: 400;
-    font-style: italic;
-    text-align: center;
+.headerCopy {
+  display: grid;
+  gap: var(--space-sm);
 }
 
-.projectsList {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: var(--space-xl) var(--space-md);
-    padding: var(--space-xl) 0;
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.72fr);
+  gap: var(--space-xl);
+  align-items: start;
 }
 
-.projectCard {
-    grid-column: span 12;
-    position: relative;
-    display: flex;
-    flex-direction: column;
+.projectList {
+  border-top: 1px solid var(--surface-line);
 }
 
-@media (min-width: 768px) {
-    .projectCard[data-even="true"] {
-        grid-column: 1 / 9;
-        /* Larger leading image */
-        padding-right: var(--space-xl);
-    }
-
-    .projectCard[data-even="false"] {
-        grid-column: 7 / 13;
-        /* Smaller trailing image */
-        /* Deeper negative margin for intense magazine overlap */
-        margin-top: -25vw;
-        padding-left: var(--space-xl);
-    }
+.projectItem {
+  position: relative;
+  border-bottom: 1px solid var(--surface-line);
+  transition: background-color 220ms ease;
 }
 
-/* Image reveal setup */
-.imageRevealContainer {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 16/9;
-    overflow: hidden;
-    margin-bottom: var(--space-md);
-    background: var(--border-light);
-}
-
-.maskImage {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: var(--bg-color);
-    z-index: 2;
-}
-
-.imageInner {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    position: relative;
-}
-
-.image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-/* Meta info - Overlapping block */
-.meta {
-    position: relative;
-    z-index: 3;
-    background-color: var(--bg-color);
-    padding: var(--space-md);
-    margin-top: -10%;
-    margin-left: var(--space-md);
-    margin-right: var(--space-md);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
-}
-
-@media (min-width: 768px) {
-    .projectCard[data-even="true"] .meta {
-        align-self: flex-start;
-        /* Push it outside the bounds slightly */
-        margin-left: -8%;
-        max-width: 450px;
-    }
-
-    .projectCard[data-even="false"] .meta {
-        align-self: flex-end;
-        /* Push it outside the right bounds */
-        margin-right: -8%;
-        max-width: 400px;
-    }
-}
-
-.metaMain {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.projectTitle {
-    font-family: var(--font-serif);
-    font-size: clamp(1.5rem, 3vw, 2.5rem);
-    font-weight: 400;
+.projectItem::before {
+  content: "";
+  position: absolute;
+  left: -0.7rem;
+  top: 1rem;
+  bottom: 1rem;
+  width: 2px;
+  background: transparent;
+  transition: background-color 220ms ease;
 }
 
 .projectLink {
-    text-decoration: none;
-    color: inherit;
+  display: grid;
+  gap: 0.95rem;
+  padding: 1.4rem 0;
+  min-width: 0;
+}
+
+.itemTopline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.itemMain {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.itemTitle {
+  font-size: clamp(2.1rem, 4.6vw, 4.8rem);
+  line-height: 0.94;
+  transition: color 220ms ease, transform 320ms var(--ease-out-expo);
+  text-wrap: balance;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.itemRole {
+  font-size: 0.92rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.itemDetails {
+  display: grid;
+  gap: 0.9rem;
+  max-width: 36rem;
+  transform-origin: top left;
+  min-width: 0;
+}
+
+.itemExcerpt {
+  color: var(--text-main);
+  font-size: 1rem;
+  line-height: 1.8;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.itemMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.55rem;
+  border: 1px solid var(--surface-line);
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.itemCta {
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent-warm);
+}
+
+.projectItem:hover .itemTitle,
+.active .itemTitle {
+  color: color-mix(in oklab, var(--surface-ink) 74%, var(--accent-warm));
+  transform: translateX(var(--list-focus-shift));
+}
+
+.projectItem:hover::before,
+.active::before {
+  background: var(--accent-warm);
+}
+
+.previewColumn {
+  position: relative;
+}
+
+.previewFrame {
+  position: sticky;
+  top: 6.4rem;
+  overflow: hidden;
+  background: var(--surface-hero);
+  min-height: clamp(28rem, 56vw, 42rem);
+  border: 1px solid color-mix(in oklab, var(--surface-ink) 18%, transparent);
+}
+
+.previewInner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.previewImage {
+  width: 100%;
+  height: clamp(28rem, 56vw, 42rem);
+  object-fit: cover;
+  filter: saturate(0.88) contrast(1.02);
+}
+
+.previewCaption {
+  position: absolute;
+  left: var(--space-md);
+  right: var(--space-md);
+  bottom: var(--space-md);
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.95rem 1rem;
+  background: color-mix(in oklab, var(--surface-paper) 16%, transparent);
+  color: var(--surface-paper);
+  backdrop-filter: blur(8px);
+}
+
+.previewLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--surface-paper) 70%, var(--accent-electric));
+}
+
+.previewName {
+  font-size: clamp(1.5rem, 3vw, 2.4rem);
+  font-family: var(--font-serif);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 980px) {
+  .header,
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .previewColumn {
+    order: -1;
+  }
+
+  .previewFrame {
     position: relative;
-    display: inline-block;
+    top: auto;
+    min-height: auto;
+  }
+
+  .previewImage {
+    height: 22rem;
+  }
+
+  .itemDetails {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
-.projectLink::after {
-    content: '';
-    position: absolute;
-    width: 100%;
-    transform: scaleX(0);
-    height: 1px;
-    bottom: 0;
-    left: 0;
-    background-color: currentColor;
-    transform-origin: bottom right;
-    transition: transform 0.25s ease-out;
-}
+@media (max-width: 680px) {
+  .projectLink {
+    padding: 1.1rem 0 1.25rem;
+  }
 
-.projectLink:hover::after {
-    transform: scaleX(1);
-    transform-origin: bottom left;
-}
+  .itemTitle {
+    font-size: clamp(2rem, 10vw, 3.25rem);
+  }
 
-.role {
-    font-family: var(--font-sans);
-    color: var(--text-muted);
-}
+  .itemMeta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 
-.metaBottom {
-    display: flex;
-    justify-content: space-between;
-    font-family: var(--font-sans);
-    font-size: 0.85rem;
-    color: var(--accent);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding-top: var(--space-sm);
-    border-top: 1px solid var(--border-light);
-}
-
-@media (max-width: 768px) {
-    .meta {
-        margin-top: -15%;
-    }
+  .projectItem:hover .itemTitle,
+  .active .itemTitle {
+    transform: none;
+  }
 }

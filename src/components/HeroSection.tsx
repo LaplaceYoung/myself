@@ -1,118 +1,195 @@
-import { motion, useScroll, useTransform, useVelocity, useSpring, type Variants } from 'framer-motion';
-import { useRef } from 'react';
+import { motion, useReducedMotion, useScroll, useTransform, type Variants } from 'framer-motion';
+import { useRef, useState } from 'react';
 import styles from './HeroSection.module.css';
 import { useLanguage } from '../LanguageContext';
+import { applyFallbackImage, localAsset } from '../utils/image';
 
 const HeroSection = () => {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const { scrollYProgress } = useScroll({
-        target: containerRef,
-        offset: ['start start', 'end start']
-    });
+  const containerRef = useRef<HTMLElement>(null);
+  const [videoFailed, setVideoFailed] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
+  const { t } = useLanguage();
 
-    // Parallax effects
-    const yText = useTransform(scrollYProgress, [0, 1], ['0%', '80%']); // Deeper parallax for text
-    const opacityText = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
-    const scaleImage = useTransform(scrollYProgress, [0, 1], [1, 1.15]);
-    const yImage = useTransform(scrollYProgress, [0, 1], ['0%', '30%']); // Slower parallax for background
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ['start start', 'end start'],
+  });
 
-    // Scroll Velocity Physics (Skew)
-    const { scrollY } = useScroll();
-    const scrollVelocity = useVelocity(scrollY);
-    const smoothVelocity = useSpring(scrollVelocity, {
-        damping: 50,
-        stiffness: 400
-    });
-    // Range of skew based on velocity
-    const skewVelocity = useTransform(smoothVelocity, [-1000, 0, 1000], [-5, 0, 5]);
+  const mediaY = useTransform(scrollYProgress, [0, 1], ['0%', prefersReducedMotion ? '0%' : '16%']);
+  const frameY = useTransform(scrollYProgress, [0, 1], ['0%', prefersReducedMotion ? '0%' : '8%']);
+  const textY = useTransform(scrollYProgress, [0, 1], ['0%', prefersReducedMotion ? '0%' : '24%']);
+  const fadeOut = useTransform(scrollYProgress, [0, 0.82], [1, 0]);
 
-    // Handle Mobile Fallback for Animations
-    const isMobile = typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)').matches : false;
-    const finalSkew = isMobile ? 0 : skewVelocity;
+  const headingVariants: Variants = {
+    hidden: {},
+    visible: {
+      transition: {
+        delayChildren: 0.15,
+        staggerChildren: 0.12,
+      },
+    },
+  };
 
-    const { t } = useLanguage();
+  const cueLabels = [t('hero.pillStory'), t('hero.pillMotion'), t('hero.pillCraft')];
 
-    const chars = t('hero.title').split("");
+  const lineVariants: Variants = {
+    hidden: {
+      y: '112%',
+      opacity: 0,
+    },
+    visible: {
+      y: '0%',
+      opacity: 1,
+      transition: {
+        duration: 1.05,
+        ease: [0.16, 1, 0.3, 1],
+      },
+    },
+  };
 
-    const containerVariants: Variants = {
-        hidden: {},
-        visible: {
-            transition: {
-                staggerChildren: 0.03, // Tighter stagger for characters
-                delayChildren: 0.2
-            }
-        }
-    };
+  const jumpTo = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
+    }
+  };
 
-    const charVariants: Variants = {
-        hidden: {
-            y: "110%",
-            rotateX: 60,
-            opacity: 0,
-            transformOrigin: "bottom center"
-        },
-        visible: {
-            y: "0%",
-            rotateX: 0,
-            opacity: 1,
-            transition: { duration: 1.2, ease: [0.16, 1, 0.3, 1] }
-        }
-    };
-
-    return (
-        <section ref={containerRef} className={styles.heroWrapper}>
+  return (
+    <section ref={containerRef} className={styles.heroWrapper}>
+      <div className="container">
+        <div className={styles.heroGrid}>
+          <motion.div className={styles.copyColumn} style={{ y: textY, opacity: fadeOut }}>
             <motion.div
-                className={styles.textContainer}
-                style={{ y: yText, opacity: opacityText }}
+              className="section-kicker"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             >
-                <p className={styles.label}>{t('hero.role')}</p>
-                <motion.h1
-                    className={`editorial-title ${styles.mainTitle}`}
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                    style={{ skewY: finalSkew, perspective: 1200 }}
-                >
-                    {chars.map((char, index) => (
-                        <span key={index} className={styles.wordWrapper}>
-                            <motion.span variants={charVariants} className={styles.word}>
-                                {char === " " ? "\u00A0" : char}
-                            </motion.span>
-                        </span>
-                    ))}
-                </motion.h1>
+              {t('hero.kicker')}
             </motion.div>
 
-            <div className={styles.imageContainer}>
-                <motion.div
-                    className={styles.imageInner}
-                    style={{ scale: scaleImage, y: yImage }}
-                    initial={{ clipPath: 'inset(50% 0 50% 0)', filter: 'blur(20px)', scale: 1.1 }}
-                    animate={{ clipPath: 'inset(0% 0 0% 0)', filter: 'blur(0px)', scale: 1 }}
-                    transition={{ duration: 2, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                >
-                    {/* High-end Abstract Video Background */}
-                    <video
-                        src="uploads/hero_bg_video.mp4"
-                        className={styles.heroImage}
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                    />
-                </motion.div>
-            </div>
+            <motion.div
+              className={styles.roleLine}
+              initial={{ opacity: 0, y: 22 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.85, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {t('hero.role')}
+            </motion.div>
 
-            <div className={styles.scrollIndicator}>
-                <motion.span
-                    animate={{ y: [0, 10, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                >
-                    {t('hero.scroll')}
+            <motion.h1
+              className={`${styles.mainTitle} editorial-title`}
+              variants={headingVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              <span className={styles.lineMask}>
+                <motion.span className={styles.lineInner} variants={lineVariants}>
+                  {t('hero.titleL1')}
                 </motion.span>
+              </span>
+              <span className={styles.lineMask}>
+                <motion.span className={`${styles.lineInner} ${styles.emphasisLine}`} variants={lineVariants}>
+                  {t('hero.titleL2')}
+                </motion.span>
+              </span>
+            </motion.h1>
+
+            <motion.p
+              className={styles.subtitle}
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 0.32, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {t('hero.subtitle')}
+            </motion.p>
+
+            <motion.div
+              className={styles.actionRow}
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 0.42, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <button type="button" className={styles.jumpLink} onClick={() => jumpTo('projects')}>
+                {t('nav.projects')}
+              </button>
+              <button type="button" className={styles.jumpLink} onClick={() => jumpTo('writings')}>
+                {t('nav.writings')}
+              </button>
+            </motion.div>
+
+            <motion.ul
+              className={styles.cueList}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {cueLabels.map((label) => (
+                <li key={label} className={styles.cueItem}>
+                  {label}
+                </li>
+              ))}
+            </motion.ul>
+
+            <motion.p
+              className={styles.note}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1, delay: 0.55 }}
+            >
+              {t('hero.note')}
+            </motion.p>
+          </motion.div>
+
+          <motion.div
+            className={styles.mediaColumn}
+            style={{ y: frameY }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.1, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <div className={styles.mediaFrame}>
+              <motion.div className={styles.mediaInner} style={{ y: mediaY }}>
+                <video
+                  src={localAsset('uploads/hero_bg_video.mp4')}
+                  className={styles.heroMedia}
+                  autoPlay={!prefersReducedMotion}
+                  loop
+                  muted
+                  playsInline
+                  poster={localAsset('uploads/aiingo_promo_v2.png')}
+                  onError={() => setVideoFailed(true)}
+                />
+                {videoFailed ? (
+                  <img
+                    src={localAsset('uploads/aiingo_promo_v2.png')}
+                    alt="Featured project preview"
+                    className={styles.heroMedia}
+                    onError={(event) => applyFallbackImage(event.currentTarget)}
+                  />
+                ) : null}
+              </motion.div>
+
+              <div className={styles.mediaOverlay}>
+                <span className={styles.overlayLabel}>{t('hero.overlayLabel')}</span>
+                <span className={styles.overlayMeta}>{t('hero.overlayMeta')}</span>
+              </div>
             </div>
-        </section>
-    );
+          </motion.div>
+        </div>
+      </div>
+
+      <motion.div
+        className={styles.scrollIndicator}
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.9, delay: 0.7, ease: [0.16, 1, 0.3, 1] }}
+      >
+        <span>{t('hero.scroll')}</span>
+        <span className={styles.scrollLine} />
+      </motion.div>
+    </section>
+  );
 };
 
 export default HeroSection;

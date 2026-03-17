@@ -1,77 +1,143 @@
 {
-  "projectsData": [
+  "meta": {
+    "schemaVersion": 2,
+    "updatedAt": "2026-03-17T06:00:29.347Z"
+  },
+  "projects": [
     {
       "id": 1,
-      "title": "AIingo (百面斩)",
+      "slug": "aiingo",
+      "title": "AIingo",
       "role": "LLM / Agent / Fullstack",
       "year": "2026",
       "image": "uploads/aiingo_promo_v2.png",
-      "link": "https://github.com/LaplaceYoung/AIingo"
+      "link": "https://github.com/LaplaceYoung/AIingo",
+      "excerpt": "An AI-assisted language product focused on practical workflows.",
+      "tags": [
+        "agent",
+        "llm",
+        "product"
+      ],
+      "status": "published",
+      "locale": "bi",
+      "seoTitle": "AIingo - AI Product Case",
+      "seoDescription": "A full-stack AI workflow product with agent-oriented design."
     },
     {
       "id": 2,
+      "slug": "xknowledge",
       "title": "Xknowledge",
       "role": "Chrome Extension / AI",
       "year": "2025",
       "image": "uploads/xknowledge_promo_v2.png",
-      "link": "https://laplaceyoung.github.io/Xknowledge/"
+      "link": "https://laplaceyoung.github.io/Xknowledge/",
+      "excerpt": "Knowledge capture extension that structures fragmented inputs.",
+      "tags": [
+        "extension",
+        "knowledge",
+        "ai"
+      ],
+      "status": "published",
+      "locale": "bi",
+      "seoTitle": "Xknowledge - Browser Knowledge Tool",
+      "seoDescription": "Chrome extension for organizing and reusing web knowledge."
     },
     {
       "id": 3,
+      "slug": "mymd",
       "title": "MYmd",
       "role": "Desktop App / Tauri",
       "year": "2025",
       "image": "uploads/mymd_promo_v2.png",
-      "link": "https://laplaceyoung.github.io/MYmd/"
+      "link": "https://laplaceyoung.github.io/MYmd/",
+      "excerpt": "A desktop markdown studio for structured writing and ideation.",
+      "tags": [
+        "tauri",
+        "markdown",
+        "editor"
+      ],
+      "status": "published",
+      "locale": "bi",
+      "seoTitle": "MYmd - Desktop Markdown Studio",
+      "seoDescription": "A Tauri markdown editor with writing-focused workflows."
     }
   ],
-  "writingsData": [
+  "writings": [
     {
-      "id": 1773067701401,
-      "title": "文字即确信",
-      "date": "03/2026",
+      "id": 101,
+      "slug": "writing-as-clarity",
+      "title": "文字即澄明",
       "category": "书评",
+      "date": "2026-03",
       "image": "uploads/1773067715010-221964769.jpeg",
-      "content": "于是，我决定记录下更多的文字。\n\n最开始知道北岛，和大多数人一样，源于那首耳熟能详甚至有些被咀嚼至滥俗的《回答》——“**卑鄙是卑鄙者的通行证，高尚是高尚者的墓志铭**”。当时只觉得那是情绪浓烈的新诗，心里草草地将北岛与新月派归入同一个朦胧的年代。以至于我弄错了他所处的时代好久，直到后来我又读到了海子，读到了那句的“**面朝大海，春暖花开**”。\n\n然而，春天最终没能降临在诗人自己身上，海子不幸地被战胜了。\n\n在随意购置的一本诗集扉页上，我惊愕地瞥见海子的死因竟是卧轨。在震悚之余，我却在一篇悼文中撞见了一个熟悉的名字：北岛。带着一种难以言喻的心境，我重新、完整地，再一次读完了《回答》。很奇怪，读完这一遍我彻底记住了这首诗，或许这就是五千年象形文字留在血液里的远古记忆。\n\n仿佛是饿极了，我开始报复性地、广泛地阅读北岛的诗歌、散文和生平。我渐渐恍然，诗人们没能熬过的那个春天，其实是一道巨大的、断裂的分水岭。那一年之后，季风骤然改变了方向，一场庞大的沉默降临。时代的列车轰然改道，将一些依然试图站立的灵魂连根拔起，抛向了漫长的、没有归途的远方。\n\n那些掷地有声的文字，头一次让我在阅读时产生了一种毛骨悚然之感。那绝非出于恐惧，而是被诗人遣词造句中那种极致的精炼与克制所震慑。\n\n零度写作。\n\n这是我高中时学到的文学概念。在北岛的笔下，“零度”是将一场未竟的狂飙与漫长流亡的阵痛，极度压缩、冷凝成了一层坚硬的冰面。面对那个骤然失语的庞大母体，面对那扇从背后重重关上的门，“零度”是他唯一能保持清醒与尊严的姿态。\n\n当你顺着这种笔触走进他的散文集《蓝房子》，你会发现，这座用母语在异乡搭建的建筑里，收留了多少在世界边缘如同浮萍般游走的伟大灵魂。他写特朗斯特罗姆，写金斯堡，他从不仰视，也不哀叹，只是用近乎冷酷的白描，勾勒着他们在异国他乡的醉酒、衰老与窘迫。\n\n合上书本，再环顾我们当下的阅读场域，那种曾让我“毛骨悚然”的文字张力早已几近绝迹。如今的文字，大多在无菌的温室里，被小心翼翼地修剪成了安全、精致却毫无生气的盆景。真实的疼痛被一层层华丽的辞藻包裹，沉重的拷问被轻盈的呢喃所消解。在这样一个渐渐失去痛觉、习惯于在盛大的合唱中隐匿真声的语境里，北岛那种剥离了一切多余情感的“零度”，反倒成了一面最刺眼的镜子。\n\n看似没有温度的文字背后，是一座被封存的活火山。他把无处安放的故乡，全都藏在了这不露声色的零度冰面之下。"
+      "excerpt": "当表达不再求快，而开始求真，写作会变成一次精确思考。",
+      "content": "# 文字即澄明\n\n写作不是输出情绪，而是整理认知。\n\n当我们愿意慢下来，语言会显露结构。",
+      "tags": [
+        "writing",
+        "thinking",
+        "book"
+      ],
+      "status": "published",
+      "locale": "zh",
+      "seoTitle": "文字即澄明 - 写作与思考",
+      "seoDescription": "关于写作如何帮助我们获得更清晰认知的短文。"
+    },
+    {
+      "id": 102,
+      "slug": "craft-and-product",
+      "title": "Craft Before Scale",
+      "category": "Product",
+      "date": "2026-02",
+      "image": "uploads/mymd_promo_v2.png",
+      "excerpt": "A calm workflow outperforms flashy complexity over time.",
+      "content": "# Craft Before Scale\n\nGood products are composed, not rushed.\n\nShip quality first, then accelerate.",
+      "tags": [
+        "product",
+        "execution"
+      ],
+      "status": "draft",
+      "locale": "en",
+      "seoTitle": "Craft Before Scale",
+      "seoDescription": "On product quality and execution rhythm."
     }
   ],
-  "curationsData": [
+  "curations": [
     {
-      "id": 1773069293475,
+      "id": 1773221358088,
+      "slug": "curation-1773221358088",
       "type": "Book",
-      "title": "故事新编",
-      "image": "https://img1.doubanio.com/view/subject/l/public/s1002283.jpg",
-      "description": "鲁迅 / 2006年6月 / 人民文学出版社\n10/10"
+      "title": "十二月三十一日",
+      "image": "https://img1.doubanio.com/view/subject/m/public/s28261249.jpg",
+      "description": "薛忆沩 / 2015 / 华东师范大学出版社",
+      "tags": [
+        "Douban"
+      ],
+      "status": "published",
+      "locale": "bi"
     },
     {
-      "id": 1773068076274,
+      "id": 1773221344937,
+      "slug": "curation-1773221344937",
       "type": "Book",
-      "title": "藍房子",
-      "image": "https://img9.doubanio.com/view/subject/m/public/s1668555.jpg",
-      "description": "北島 / 1998 / 九歌出版社有限公司\n8.5/10"
-    },
-    {
-      "id": 1773067990189,
-      "type": "Book",
-      "title": "靈山 ",
-      "image": "https://covers.openlibrary.org/b/id/52610-L.jpg",
-      "description": "9/10"
-    },
-    {
-      "id": 1773067940956,
-      "type": "Book",
-      "title": "流动的房间",
-      "image": "https://img9.doubanio.com/view/subject/m/public/s24449994.jpg",
-      "description": "薛忆沩 / 2013 / 上海文艺出版社\n7.9/10"
+      "title": "蓝房子",
+      "image": "https://img3.doubanio.com/view/subject/m/public/s34326203.jpg",
+      "description": "萧朱 / 2022 / 广西师范大学出版社",
+      "tags": [
+        "Douban"
+      ],
+      "status": "published",
+      "locale": "bi"
     }
   ],
-  "footerData": [
+  "footer": [
     {
       "id": 1,
       "email": "hello@example.com",
       "twitter_link": "https://twitter.com/LaplaceYoung",
       "github_link": "https://github.com/LaplaceYoung",
-      "linkedin_link": "https://linkedin.com/"
+      "linkedin_link": "https://linkedin.com/",
+      "location": "Shanghai, China",
+      "credibility": "Available for global collaboration"
     }
   ]
 }
