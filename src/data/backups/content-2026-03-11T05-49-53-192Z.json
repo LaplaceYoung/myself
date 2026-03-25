@@ -1,0 +1,161 @@
+{
+  "meta": {
+    "schemaVersion": 2,
+    "updatedAt": "2026-03-11T05:49:53.156Z"
+  },
+  "projects": [
+    {
+      "year": "2026",
+      "slug": "crud-test",
+      "id": 999991,
+      "excerpt": "test",
+      "locale": "en",
+      "link": "https://example.com",
+      "role": "QA",
+      "image": "https://example.com/a.jpg",
+      "status": "draft",
+      "title": "CRUD Test Updated",
+      "tags": [
+        "qa"
+      ]
+    },
+    {
+      "id": 1,
+      "slug": "aiingo",
+      "title": "AIingo",
+      "role": "LLM / Agent / Fullstack",
+      "year": "2026",
+      "image": "uploads/aiingo_promo_v2.png",
+      "link": "https://github.com/LaplaceYoung/AIingo",
+      "excerpt": "An AI-assisted language product focused on practical workflows.",
+      "tags": [
+        "agent",
+        "llm",
+        "product"
+      ],
+      "status": "published",
+      "locale": "bi",
+      "seoTitle": "AIingo - AI Product Case",
+      "seoDescription": "A full-stack AI workflow product with agent-oriented design."
+    },
+    {
+      "id": 2,
+      "slug": "xknowledge",
+      "title": "Xknowledge",
+      "role": "Chrome Extension / AI",
+      "year": "2025",
+      "image": "uploads/xknowledge_promo_v2.png",
+      "link": "https://laplaceyoung.github.io/Xknowledge/",
+      "excerpt": "Knowledge capture extension that structures fragmented inputs.",
+      "tags": [
+        "extension",
+        "knowledge",
+        "ai"
+      ],
+      "status": "published",
+      "locale": "bi",
+      "seoTitle": "Xknowledge - Browser Knowledge Tool",
+      "seoDescription": "Chrome extension for organizing and reusing web knowledge."
+    },
+    {
+      "id": 3,
+      "slug": "mymd",
+      "title": "MYmd",
+      "role": "Desktop App / Tauri",
+      "year": "2025",
+      "image": "uploads/mymd_promo_v2.png",
+      "link": "https://laplaceyoung.github.io/MYmd/",
+      "excerpt": "A desktop markdown studio for structured writing and ideation.",
+      "tags": [
+        "tauri",
+        "markdown",
+        "editor"
+      ],
+      "status": "published",
+      "locale": "bi",
+      "seoTitle": "MYmd - Desktop Markdown Studio",
+      "seoDescription": "A Tauri markdown editor with writing-focused workflows."
+    }
+  ],
+  "writings": [
+    {
+      "id": 101,
+      "slug": "writing-as-clarity",
+      "title": "?????",
+      "category": "??",
+      "date": "2026-03",
+      "image": "uploads/1773067715010-221964769.jpeg",
+      "excerpt": "???????,?????,????????????",
+      "content": "# ?????\n\n????????,???????\n\n????????,????????",
+      "tags": [
+        "writing",
+        "thinking",
+        "book"
+      ],
+      "status": "published",
+      "locale": "zh",
+      "seoTitle": "????? - ?????",
+      "seoDescription": "?????????????????????"
+    },
+    {
+      "id": 102,
+      "slug": "craft-and-product",
+      "title": "Craft Before Scale",
+      "category": "Product",
+      "date": "2026-02",
+      "image": "uploads/mymd_promo_v2.png",
+      "excerpt": "A calm workflow outperforms flashy complexity over time.",
+      "content": "# Craft Before Scale\n\nGood products are composed, not rushed.\n\nShip quality first, then accelerate.",
+      "tags": [
+        "product",
+        "execution"
+      ],
+      "status": "draft",
+      "locale": "en",
+      "seoTitle": "Craft Before Scale",
+      "seoDescription": "On product quality and execution rhythm."
+    }
+  ],
+  "curations": [
+    {
+      "id": 1773207958737,
+      "slug": "curation-1773207958737",
+      "type": "Book",
+      "title": "????",
+      "image": "https://img3.doubanio.com/view/subject/m/public/s34935857.jpg",
+      "description": "?? / 2024 / ?????????",
+      "tags": [
+        "Douban"
+      ],
+      "status": "draft",
+      "locale": "bi"
+    },
+    {
+      "id": 202,
+      "slug": "blue-house",
+      "type": "Book",
+      "title": "???",
+      "image": "https://img9.doubanio.com/view/subject/m/public/s1668555.jpg",
+      "description": "??,?????????????",
+      "tags": [
+        "poetry",
+        "essay"
+      ],
+      "status": "published",
+      "locale": "zh",
+      "seoTitle": "???",
+      "seoDescription": "??????????"
+    }
+  ],
+  "footer": [
+    {
+      "id": 1,
+      "email": "hello@example.com",
+      "twitter_link": "https://twitter.com/LaplaceYoung",
+      "github_link": "https://github.com/LaplaceYoung",
+      "linkedin_link": "https://linkedin.com/",
+      "location": "Shanghai, China",
+      "credibility": "Available for global collaboration"
+    }
+  ]
+}

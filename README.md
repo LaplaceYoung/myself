@@ -39,11 +39,20 @@ Run the local Admin OS to manage your writings and curations:
 npm run admin
 ```
 
+Before first run, create env config:
+
+```bash
+cp .env.example .env
+# then set ADMIN_PASSWORD and optional third-party API keys
+npm run admin
+```
+
 The Admin Panel features:
 
 - **Intelligent Scraping**: Auto-fetch metadata and high-definition covers from Douban, TMDB, and Google Books.
 - **Markdown Studio**: A robust split-pane Markdown editor with direct drag-and-drop/paste image upload support.
 - **Content Persistence**: Automatically updates `src/data/content.json` and saves assets to `public/uploads/`.
+- **Content Governance**: Server-side schema validation, version conflict checks, and local backups before writes.
 
 ### 2. Live Sync
 

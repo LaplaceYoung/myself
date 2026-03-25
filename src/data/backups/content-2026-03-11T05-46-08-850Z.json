@@ -1,0 +1,149 @@
+{
+  "meta": {
+    "schemaVersion": 2,
+    "updatedAt": "2026-03-11T08:00:00.000Z"
+  },
+  "projects": [
+    {
+      "id": 1,
+      "slug": "aiingo",
+      "title": "AIingo",
+      "role": "LLM / Agent / Fullstack",
+      "year": "2026",
+      "image": "uploads/aiingo_promo_v2.png",
+      "link": "https://github.com/LaplaceYoung/AIingo",
+      "excerpt": "An AI-assisted language product focused on practical workflows.",
+      "tags": [
+        "agent",
+        "llm",
+        "product"
+      ],
+      "status": "published",
+      "locale": "bi",
+      "seoTitle": "AIingo - AI Product Case",
+      "seoDescription": "A full-stack AI workflow product with agent-oriented design."
+    },
+    {
+      "id": 2,
+      "slug": "xknowledge",
+      "title": "Xknowledge",
+      "role": "Chrome Extension / AI",
+      "year": "2025",
+      "image": "uploads/xknowledge_promo_v2.png",
+      "link": "https://laplaceyoung.github.io/Xknowledge/",
+      "excerpt": "Knowledge capture extension that structures fragmented inputs.",
+      "tags": [
+        "extension",
+        "knowledge",
+        "ai"
+      ],
+      "status": "published",
+      "locale": "bi",
+      "seoTitle": "Xknowledge - Browser Knowledge Tool",
+      "seoDescription": "Chrome extension for organizing and reusing web knowledge."
+    },
+    {
+      "id": 3,
+      "slug": "mymd",
+      "title": "MYmd",
+      "role": "Desktop App / Tauri",
+      "year": "2025",
+      "image": "uploads/mymd_promo_v2.png",
+      "link": "https://laplaceyoung.github.io/MYmd/",
+      "excerpt": "A desktop markdown studio for structured writing and ideation.",
+      "tags": [
+        "tauri",
+        "markdown",
+        "editor"
+      ],
+      "status": "published",
+      "locale": "bi",
+      "seoTitle": "MYmd - Desktop Markdown Studio",
+      "seoDescription": "A Tauri markdown editor with writing-focused workflows."
+    }
+  ],
+  "writings": [
+    {
+      "id": 101,
+      "slug": "writing-as-clarity",
+      "title": "文字即澄明",
+      "category": "书评",
+      "date": "2026-03",
+      "image": "uploads/1773067715010-221964769.jpeg",
+      "excerpt": "当表达不再求快，而开始求真，写作会变成一次精确思考。",
+      "content": "# 文字即澄明\n\n写作不是输出情绪，而是整理认知。\n\n当我们愿意慢下来，语言会显露结构。",
+      "tags": [
+        "writing",
+        "thinking",
+        "book"
+      ],
+      "status": "published",
+      "locale": "zh",
+      "seoTitle": "文字即澄明 - 写作与思考",
+      "seoDescription": "关于写作如何帮助我们获得更清晰认知的短文。"
+    },
+    {
+      "id": 102,
+      "slug": "craft-and-product",
+      "title": "Craft Before Scale",
+      "category": "Product",
+      "date": "2026-02",
+      "image": "uploads/mymd_promo_v2.png",
+      "excerpt": "A calm workflow outperforms flashy complexity over time.",
+      "content": "# Craft Before Scale\n\nGood products are composed, not rushed.\n\nShip quality first, then accelerate.",
+      "tags": [
+        "product",
+        "execution"
+      ],
+      "status": "draft",
+      "locale": "en",
+      "seoTitle": "Craft Before Scale",
+      "seoDescription": "On product quality and execution rhythm."
+    }
+  ],
+  "curations": [
+    {
+      "id": 201,
+      "slug": "story-new-edition",
+      "type": "Book",
+      "title": "故事新编",
+      "image": "https://img1.doubanio.com/view/subject/l/public/s1002283.jpg",
+      "description": "鲁迅，重新发明神话叙事的锋利样本。",
+      "tags": [
+        "book",
+        "chinese"
+      ],
+      "status": "published",
+      "locale": "zh",
+      "seoTitle": "故事新编",
+      "seoDescription": "一本持续启发叙事设计的作品。"
+    },
+    {
+      "id": 202,
+      "slug": "blue-house",
+      "type": "Book",
+      "title": "蓝房子",
+      "image": "https://img9.doubanio.com/view/subject/m/public/s1668555.jpg",
+      "description": "北岛，关于漂泊、语言与时代记忆。",
+      "tags": [
+        "poetry",
+        "essay"
+      ],
+      "status": "published",
+      "locale": "zh",
+      "seoTitle": "蓝房子",
+      "seoDescription": "诗性散文与时代观察。"
+    }
+  ],
+  "footer": [
+    {
+      "id": 1,
+      "email": "hello@example.com",
+      "twitter_link": "https://twitter.com/LaplaceYoung",
+      "github_link": "https://github.com/LaplaceYoung",
+      "linkedin_link": "https://linkedin.com/",
+      "location": "Shanghai, China",
+      "credibility": "Available for global collaboration"
+    }
+  ]
+}

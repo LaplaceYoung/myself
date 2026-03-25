@@ -1,118 +1,75 @@
 .aboutWrapper {
-    padding: var(--space-xl) 0;
-    position: relative;
-    background-color: var(--bg-color);
-    min-height: 80vh;
-    display: flex;
-    align-items: center;
+  padding: var(--space-2xl) 0;
+  background: linear-gradient(180deg, transparent 0%, color-mix(in oklab, var(--surface-paper-strong) 65%, transparent) 100%);
 }
 
-.grid {
-    display: grid;
-    grid-template-columns: 1fr 3fr;
-    gap: var(--space-lg);
+.layout {
+  display: grid;
+  grid-template-columns: minmax(14rem, 0.8fr) minmax(0, 1.25fr);
+  gap: var(--space-xl);
+  align-items: start;
 }
 
-.leftCol {
-    position: relative;
-    padding-right: var(--space-md);
-    display: flex;
-    justify-content: flex-end;
+.sideColumn {
+  position: sticky;
+  top: 6rem;
+  display: grid;
+  gap: var(--space-sm);
 }
 
-.verticalLine {
-    position: absolute;
-    right: 0;
-    top: 0;
-    width: 1px;
-    background-color: var(--border-light);
-    transform-origin: top;
+.sideNote {
+  max-width: 20rem;
+  font-size: 0.98rem;
+  line-height: 1.8;
+  color: var(--text-muted);
 }
 
-.sectionLabel {
-    font-family: var(--font-sans);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-    position: sticky;
-    top: 50vh;
-}
-
-.rightCol {
-    padding-left: var(--space-md);
-    max-width: 800px;
+.mainColumn {
+  display: grid;
+  gap: var(--space-lg);
 }
 
 .heading {
-    font-size: clamp(2rem, 5vw, 4rem);
-    line-height: 1.2;
-    margin-bottom: var(--space-lg);
-    display: flex;
-    flex-direction: column;
+  display: grid;
+  gap: 0.3rem;
+  max-width: 12ch;
+  font-size: clamp(3rem, 6.5vw, 5.8rem);
+  line-height: 0.95;
 }
 
-.heading span {
-    display: block;
+.accentLine {
+  color: color-mix(in oklab, var(--surface-ink) 78%, var(--accent-warm));
+  font-style: italic;
 }
 
-.italicText {
-    font-style: italic;
-    color: var(--text-muted);
+.textGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-md);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--surface-line);
 }
 
-.textContent {
-    font-family: var(--font-sans);
-    font-size: 1.125rem;
-    line-height: 1.8;
-    color: var(--text-main);
-    max-width: 600px;
+.paragraph {
+  font-size: 1rem;
+  line-height: 1.9;
+  color: var(--text-main);
 }
 
-.paragraphLine {
-    overflow: hidden;
-    margin-bottom: var(--space-sm);
-}
+@media (max-width: 980px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
 
-.signature {
-    margin-top: var(--space-lg);
-    width: 200px;
-}
+  .sideColumn {
+    position: static;
+  }
 
-.sigSvg {
-    width: 100%;
-    height: auto;
-    overflow: visible;
-}
+  .heading {
+    max-width: 100%;
+  }
 
-@media (max-width: 768px) {
-    .grid {
-        grid-template-columns: 1fr;
-    }
-
-    .leftCol {
-        justify-content: flex-start;
-        padding-bottom: var(--space-md);
-    }
-
-    .verticalLine {
-        left: 0;
-        width: 100%;
-        height: 1px !important;
-        bottom: 0;
-        top: auto;
-    }
-
-    .sectionLabel {
-        writing-mode: horizontal-tb;
-        transform: none;
-        position: relative;
-        top: 0;
-    }
-
-    .rightCol {
-        padding-left: 0;
-    }
+  .textGrid {
+    grid-template-columns: 1fr;
+  }
 }

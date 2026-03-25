@@ -39,6 +39,7 @@ export type TranslationKey =
   | 'curations.eyebrow'
   | 'curations.title'
   | 'curations.subtitle'
+  | 'curations.keepScrolling'
   | 'footer.cta'
   | 'footer.socials'
   | 'footer.location'
@@ -89,6 +90,7 @@ export const translations: TranslationMap = {
   'curations.eyebrow': { en: 'Personal curations / 04', zh: '私人策展 / 04' },
   'curations.title': { en: 'Curations', zh: '私人策展' },
   'curations.subtitle': { en: 'Books, films, and sounds shaping my perspective.', zh: '塑造我视角的书、影像与声音。' },
+  'curations.keepScrolling': { en: 'Keep scrolling', zh: '继续滚动' },
   'footer.cta': { en: 'Let us build something meaningful together.', zh: '一起做点有价值且长期有效的作品。' },
   'footer.socials': { en: 'Socials', zh: '社交网络' },
   'footer.location': { en: 'Location', zh: '所在地' },

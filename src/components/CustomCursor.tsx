@@ -1,150 +1,138 @@
 import { useEffect, useState } from 'react';
-import { motion, useSpring, useMotionValue, useScroll } from 'framer-motion';
+import { motion, useMotionValue, useScroll, useSpring } from 'framer-motion';
 
 const CustomCursor = () => {
-    const cursorX = useMotionValue(-100);
-    const cursorY = useMotionValue(-100);
+  const cursorX = useMotionValue(-100);
+  const cursorY = useMotionValue(-100);
+  const customX = useSpring(cursorX, { damping: 28, stiffness: 320, mass: 0.16 });
+  const customY = useSpring(cursorY, { damping: 28, stiffness: 320, mass: 0.16 });
+  const { scrollYProgress } = useScroll();
 
-    // Highly responsive spring for the cursor core
-    const springConfig = { damping: 25, stiffness: 300, mass: 0.1 };
-    const customX = useSpring(cursorX, springConfig);
-    const customY = useSpring(cursorY, springConfig);
+  const [cursorText, setCursorText] = useState('');
+  const [isHovering, setIsHovering] = useState(false);
+  const [isTouchDevice] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    return window.matchMedia('(pointer: coarse)').matches;
+  });
+  const [reducedMotion] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  });
 
-    const { scrollYProgress } = useScroll();
-
-    const [cursorText, setCursorText] = useState('');
-    const [isHovering, setIsHovering] = useState(false);
-
-    const [isLensMode, setIsLensMode] = useState(false);
-
-    useEffect(() => {
-        const moveCursor = (e: MouseEvent) => {
-            cursorX.set(e.clientX);
-            cursorY.set(e.clientY);
-        };
-
-        const handleMouseOver = (e: MouseEvent) => {
-            const target = e.target as HTMLElement;
-            const closestInteractive = target.closest('a, button, [data-cursor-text]') as HTMLElement;
-
-            // Check if hovering over an element we want to apply the lens effect to
-            const isLensTarget = target.closest('.editorial-title, img, [data-lens]');
-
-            if (closestInteractive) {
-                setIsHovering(true);
-                const text = closestInteractive.getAttribute('data-cursor-text');
-                if (text) {
-                    setCursorText(text);
-                } else if (!closestInteractive.innerText) {
-                    setCursorText('VIEW');
-                } else {
-                    setCursorText('');
-                }
-            } else {
-                setIsHovering(false);
-                setCursorText('');
-            }
-
-            setIsLensMode(!!isLensTarget && !closestInteractive);
-        };
-
-        document.body.style.cursor = 'none';
-
-        window.addEventListener('mousemove', moveCursor);
-        window.addEventListener('mouseover', handleMouseOver);
-
-        return () => {
-            window.removeEventListener('mousemove', moveCursor);
-            window.removeEventListener('mouseover', handleMouseOver);
-            document.body.style.cursor = 'auto';
-        };
-    }, [cursorX, cursorY]);
-
-    // Disable completely on mobile touch devices
-    const [isTouchDevice, setIsTouchDevice] = useState(false);
-    useEffect(() => {
-        setIsTouchDevice(window.matchMedia('(pointer: coarse)').matches);
-    }, []);
-
-    if (isTouchDevice) {
-        return null;
+  useEffect(() => {
+    if (isTouchDevice || reducedMotion) {
+      return;
     }
 
-    return (
-        <motion.div
-            style={{
-                position: 'fixed',
-                left: 0,
-                top: 0,
-                x: customX,
-                y: customY,
-                translateX: '-50%',
-                translateY: '-50%',
-                pointerEvents: 'none',
-                zIndex: 99999,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                // Keep exclusion for text contrast
-                mixBlendMode: isLensMode ? 'normal' : 'exclusion'
-            }}
-        >
-            <motion.div
-                initial={false}
-                animate={{
-                    width: isLensMode ? 120 : (cursorText ? 80 : (isHovering ? 40 : 16)),
-                    height: isLensMode ? 120 : (cursorText ? 80 : (isHovering ? 40 : 16)),
-                    backgroundColor: isLensMode ? 'rgba(255, 255, 255, 0.05)' : 'white',
-                    borderRadius: '50%',
-                    backdropFilter: isLensMode ? 'invert(1) blur(4px) saturate(1.5)' : 'none',
-                    border: isLensMode ? '1px solid rgba(255,255,255,0.1)' : 'none',
-                    boxShadow: isLensMode ? '0 8px 32px rgba(0, 0, 0, 0.1)' : 'none'
-                }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'black',
-                }}
-            >
-                {/* SVG Progress Ring */}
-                {!isLensMode && !cursorText && !isHovering && (
-                    <motion.svg
-                        width="36"
-                        height="36"
-                        viewBox="0 0 36 36"
-                        style={{ position: 'absolute', opacity: 0.4, rotate: -90 }}
-                    >
-                        <motion.circle
-                            cx="18"
-                            cy="18"
-                            r="16"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1"
-                            style={{ pathLength: scrollYProgress }}
-                        />
-                    </motion.svg>
-                )}
+    const moveCursor = (event: MouseEvent) => {
+      cursorX.set(event.clientX);
+      cursorY.set(event.clientY);
+    };
 
-                <motion.span
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: cursorText && !isLensMode ? 1 : 0 }}
-                    transition={{ duration: 0.2 }}
-                    style={{
-                        fontFamily: 'var(--font-sans)',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        letterSpacing: '0.05em',
-                        whiteSpace: 'nowrap'
-                    }}
-                >
-                    {cursorText}
-                </motion.span>
-            </motion.div>
-        </motion.div>
-    );
+    const handleMouseOver = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      const interactive = target.closest('a, button, [data-cursor-text]') as HTMLElement | null;
+
+      if (!interactive) {
+        setIsHovering(false);
+        setCursorText('');
+        return;
+      }
+
+      setIsHovering(true);
+      setCursorText(interactive.getAttribute('data-cursor-text') ?? '');
+    };
+
+    document.body.style.cursor = 'none';
+    window.addEventListener('mousemove', moveCursor);
+    window.addEventListener('mouseover', handleMouseOver);
+
+    return () => {
+      window.removeEventListener('mousemove', moveCursor);
+      window.removeEventListener('mouseover', handleMouseOver);
+      document.body.style.cursor = 'auto';
+    };
+  }, [cursorX, cursorY, isTouchDevice, reducedMotion]);
+
+  if (isTouchDevice || reducedMotion) {
+    return null;
+  }
+
+  return (
+    <motion.div
+      style={{
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        x: customX,
+        y: customY,
+        translateX: '-50%',
+        translateY: '-50%',
+        pointerEvents: 'none',
+        zIndex: 99999,
+      }}
+    >
+      <motion.div
+        animate={{
+          width: cursorText ? 78 : isHovering ? 28 : 14,
+          height: cursorText ? 78 : isHovering ? 28 : 14,
+          borderWidth: cursorText ? 1 : 1.5,
+          backgroundColor: cursorText ? 'rgba(247,245,240,0.92)' : 'rgba(247,245,240,0.18)',
+        }}
+        transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+        style={{
+          position: 'relative',
+          display: 'grid',
+          placeItems: 'center',
+          borderRadius: '50%',
+          borderStyle: 'solid',
+          borderColor: 'rgba(44,44,44,0.24)',
+          color: 'var(--surface-ink)',
+          backdropFilter: 'blur(8px)',
+          boxShadow: '0 8px 30px rgba(34, 27, 24, 0.08)',
+        }}
+      >
+        {!cursorText && !isHovering ? (
+          <motion.svg
+            width="32"
+            height="32"
+            viewBox="0 0 36 36"
+            style={{ position: 'absolute', opacity: 0.55, rotate: -90 }}
+          >
+            <motion.circle
+              cx="18"
+              cy="18"
+              r="15"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1"
+              style={{ pathLength: scrollYProgress }}
+            />
+          </motion.svg>
+        ) : null}
+
+        <motion.span
+          initial={false}
+          animate={{ opacity: cursorText ? 1 : 0, scale: cursorText ? 1 : 0.8 }}
+          transition={{ duration: 0.16 }}
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontSize: '0.7rem',
+            fontWeight: 700,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {cursorText}
+        </motion.span>
+      </motion.div>
+    </motion.div>
+  );
 };
 
 export default CustomCursor;

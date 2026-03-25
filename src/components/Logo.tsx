@@ -2,71 +2,48 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
 const Logo = () => {
-    return (
-        <Link to="/">
-            <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                style={{
-                    position: 'fixed',
-                    top: 'var(--space-md)',
-                    left: 'var(--space-md)',
-                    zIndex: 9999,
-                    height: '40px',
-                    width: '40px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    mixBlendMode: 'difference', // Key for the adaptive editorial feel
-                    color: 'white', // Base color when difference is applied over bright bg
-                    cursor: 'pointer',
-                }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                title="Home"
-            >
-                <svg
-                    width="100%"
-                    height="100%"
-                    viewBox="0 0 100 100"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                >
-                    {/* Minimalist Organic Serif "LY" Monogram */}
-                    {/* The "L" with sharp editorial stems */}
-                    <path
-                        d="M35 20V80H60"
-                        stroke="currentColor"
-                        strokeWidth="3.5"
-                        strokeLinecap="square"
-                        strokeLinejoin="miter"
-                    />
-
-                    {/* The elegant "Y" that intersects */}
-                    <path
-                        d="M45 20L55 50L75 20 M55 50V85"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="square"
-                        strokeLinejoin="miter"
-                    />
-
-                    {/* An organic sweeping accent line cutting through, adding the "Organic" feel */}
-                    <motion.path
-                        d="M20 75C40 75 50 25 80 25"
-                        stroke="var(--accent)"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        style={{ mixBlendMode: 'normal' }}
-                        initial={{ pathLength: 0 }}
-                        animate={{ pathLength: 1 }}
-                        transition={{ duration: 1.5, delay: 0.2, ease: "easeOut" }}
-                    />
-                </svg>
-            </motion.div>
-        </Link>
-    );
+  return (
+    <Link to="/" aria-label="Home">
+      <motion.div
+        initial={{ opacity: 0, y: -12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
+        whileHover={{ y: -2 }}
+        style={{
+          position: 'fixed',
+          top: 'var(--space-sm)',
+          left: 'var(--space-sm)',
+          zIndex: 9999,
+          display: 'grid',
+          gap: '0.1rem',
+          color: 'var(--surface-ink)',
+        }}
+      >
+        <span
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: 'clamp(1.5rem, 2vw, 1.9rem)',
+            lineHeight: 0.9,
+            letterSpacing: '-0.05em',
+          }}
+        >
+          LY
+        </span>
+        <span
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontSize: '0.62rem',
+            fontWeight: 700,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: 'var(--text-muted)',
+          }}
+        >
+          Index
+        </span>
+      </motion.div>
+    </Link>
+  );
 };
 
 export default Logo;

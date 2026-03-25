@@ -1,155 +1,126 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import styles from './Navigation.module.css';
 import { useLanguage } from '../LanguageContext';
 
-const MagneticWrapper = ({ children }: { children: React.ReactNode }) => {
-    const ref = useRef<HTMLDivElement>(null);
-    const [position, setPosition] = useState({ x: 0, y: 0 });
-
-    const handleMouse = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (!ref.current) return;
-        const { clientX, clientY } = e;
-        const { height, width, left, top } = ref.current.getBoundingClientRect();
-        const middleX = clientX - (left + width / 2);
-        const middleY = clientY - (top + height / 2);
-        setPosition({ x: middleX * 0.35, y: middleY * 0.35 });
-    };
-
-    const reset = () => {
-        setPosition({ x: 0, y: 0 });
-    };
-
-    return (
-        <motion.div
-            ref={ref}
-            onMouseMove={handleMouse}
-            onMouseLeave={reset}
-            animate={{ x: position.x, y: position.y }}
-            transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.1 }}
-            style={{ display: "inline-block" }}
-        >
-            {children}
-        </motion.div>
-    );
-};
-
 const Navigation = () => {
-    const [isExpanded, setIsExpanded] = useState(false);
-    const [activeSection, setActiveSection] = useState('home');
-    const { t, language, setLanguage } = useLanguage();
-    const location = useLocation();
+  const [activeSection, setActiveSection] = useState('hero');
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const { t, language, toggleLanguage } = useLanguage();
+  const location = useLocation();
 
-    // Track which section is in view on the homepage
-    useEffect(() => {
-        if (location.pathname !== '/') {
-            setActiveSection('');
-            return;
-        }
-
-        const observerOptions = {
-            root: null,
-            rootMargin: '-40% 0px -40% 0px', // Center-ish of the screen
-            threshold: 0
-        };
-
-        const observerCallback = (entries: IntersectionObserverEntry[]) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    setActiveSection(entry.target.id);
-                }
-            });
-        };
-
-        const observer = new IntersectionObserver(observerCallback, observerOptions);
-
-        // Sections to track
-        const sectionIds = ['hero', 'projects', 'writings', 'curations'];
-        sectionIds.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) observer.observe(el);
-        });
-
-        return () => observer.disconnect();
-    }, [location.pathname]);
-
-    const navItems = [
-        { id: 'hero', label: t('nav.home'), path: '/' },
-        { id: 'projects', label: t('nav.projects'), path: '/#projects' },
-        { id: 'writings', label: t('nav.writings'), path: '/#writings' },
-        { id: 'curations', label: t('nav.curations'), path: '/#curations' },
-    ];
-
-    const scrollToSection = (id: string) => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.scrollIntoView({ behavior: 'smooth' });
-        }
-    };
-
+  useEffect(() => {
     if (location.pathname !== '/') {
-        return null;
+      return;
     }
 
-    return (
-        <motion.nav
-            className={styles.dockWrapper}
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 1, duration: 1, ease: [0.16, 1, 0.3, 1] }}
-        >
-            <div
-                className={`${styles.dockContainer} ${isExpanded ? styles.expanded : ''}`}
-                onMouseEnter={() => setIsExpanded(true)}
-                onMouseLeave={() => setIsExpanded(false)}
-            >
-                <div className={styles.dockContent}>
-                    {/* Navigation Links */}
-                    <div className={styles.mainLinks}>
-                        {navItems.map((item) => (
-                            <MagneticWrapper key={item.id}>
-                                <Link
-                                    to={item.path}
-                                    onClick={(e) => {
-                                        if (location.pathname === '/') {
-                                            e.preventDefault();
-                                            scrollToSection(item.id);
-                                        }
-                                    }}
-                                    className={`${styles.navItem} ${activeSection === item.id ? styles.active : ''}`}
-                                    data-cursor-text="GO"
-                                >
-                                    <span className={styles.itemLabel}>
-                                        {isExpanded ? item.label : item.label[0]}
-                                    </span>
-                                    {activeSection === item.id && (
-                                        <motion.div
-                                            layoutId="activeIndicator"
-                                            className={styles.activeDot}
-                                        />
-                                    )}
-                                </Link>
-                            </MagneticWrapper>
-                        ))}
-                    </div>
-
-                    <div className={styles.divider} />
-
-                    {/* Language Switch */}
-                    <MagneticWrapper>
-                        <button
-                            className={styles.langToggle}
-                            onClick={() => setLanguage(language === 'zh' ? 'en' : 'zh')}
-                            data-cursor-text="LANG"
-                        >
-                            {language.toUpperCase()}
-                        </button>
-                    </MagneticWrapper>
-                </div>
-            </div>
-        </motion.nav>
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
+          }
+        });
+      },
+      {
+        rootMargin: '-35% 0px -45% 0px',
+        threshold: 0,
+      },
     );
+
+    ['hero', 'projects', 'writings', 'curations'].forEach((id) => {
+      const section = document.getElementById(id);
+      if (section) {
+        observer.observe(section);
+      }
+    });
+
+    return () => observer.disconnect();
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (location.pathname !== '/') {
+      return;
+    }
+
+    const handleScroll = () => {
+      const root = document.documentElement;
+      const max = root.scrollHeight - root.clientHeight;
+      const nextValue = max > 0 ? window.scrollY / max : 0;
+      setScrollProgress(Math.max(0, Math.min(1, nextValue)));
+    };
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [location.pathname]);
+
+  if (location.pathname !== '/') {
+    return null;
+  }
+
+  const navItems = [
+    { id: 'hero', label: t('nav.home'), short: '00' },
+    { id: 'projects', label: t('nav.projects'), short: '01' },
+    { id: 'writings', label: t('nav.writings'), short: '02' },
+    { id: 'curations', label: t('nav.curations'), short: '03' },
+  ];
+
+  const scrollToSection = (id: string) => {
+    const section = document.getElementById(id);
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  return (
+    <motion.nav
+      className={styles.navWrapper}
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.95, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <div className={styles.navContainer}>
+        <div className={styles.progressRail} aria-hidden="true">
+          <motion.div
+            className={styles.progressBar}
+            animate={{ scaleX: scrollProgress }}
+            transition={{ duration: 0.18, ease: 'linear' }}
+          />
+        </div>
+
+        <div className={styles.navList}>
+          {navItems.map((item) => (
+            <Link
+              key={item.id}
+              to={`/#${item.id}`}
+              onClick={(event) => {
+                event.preventDefault();
+                scrollToSection(item.id);
+              }}
+              className={`${styles.navItem} ${activeSection === item.id ? styles.active : ''}`}
+              data-cursor-text="GO"
+            >
+              <span className={styles.itemIndex}>{item.short}</span>
+              <span className={styles.itemLabel}>{item.label}</span>
+            </Link>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          className={styles.langToggle}
+          onClick={toggleLanguage}
+          data-cursor-text="LANG"
+          aria-label={t('nav.translate')}
+        >
+          <span className={styles.itemIndex}>ZH</span>
+          <span className={styles.itemLabel}>{language === 'zh' ? 'EN' : '中文'}</span>
+        </button>
+      </div>
+    </motion.nav>
+  );
 };
 
 export default Navigation;

@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import fs from 'fs';
+import crypto from 'crypto';
+import 'dotenv/config';
 const fsp = fs.promises;
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -20,15 +22,44 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' })); // Increased limit for base64 image uploads
 
 // --- Auth Configuration ---
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '2young2simple';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+if (!ADMIN_PASSWORD) {
+    console.warn('[Auth] ADMIN_PASSWORD is not set. Admin routes are disabled until it is configured.');
+}
+
+const MAX_FAILED_ATTEMPTS = Number(process.env.ADMIN_MAX_ATTEMPTS || 8);
+const LOCK_WINDOW_MS = Number(process.env.ADMIN_LOCK_WINDOW_MS || 10 * 60 * 1000);
+const attemptTracker = new Map();
+
+const getClientKey = (req) => req.ip || req.connection.remoteAddress || 'unknown';
 
 // Middleware to verify password
 const verifyPassword = (req, res, next) => {
+    if (!ADMIN_PASSWORD) {
+        return res.status(503).json({ error: 'Admin password is not configured. Set ADMIN_PASSWORD in .env.' });
+    }
+
+    const key = getClientKey(req);
+    const now = Date.now();
+    const record = attemptTracker.get(key) || { count: 0, firstAt: now };
+    if (now - record.firstAt > LOCK_WINDOW_MS) {
+        attemptTracker.set(key, { count: 0, firstAt: now });
+    }
+
     const pwd = req.headers['x-admin-password'];
     if (pwd !== ADMIN_PASSWORD) {
+        const current = attemptTracker.get(key) || { count: 0, firstAt: now };
+        current.count += 1;
+        current.firstAt = current.firstAt || now;
+        attemptTracker.set(key, current);
+        if (current.count >= MAX_FAILED_ATTEMPTS) {
+            return res.status(429).json({ error: 'Too many failed attempts. Please retry later.' });
+        }
         console.warn(`[Auth] Blocked unauthorized attempt.`);
         return res.status(401).json({ error: 'Unauthorized: Invalid Password' });
     }
+
+    attemptTracker.delete(key);
     next();
 };
 
@@ -49,25 +80,154 @@ async function fetchSafe(url, options = {}) {
 
 // Path to our single source of truth for content
 const CONTENT_FILE_PATH = path.join(__dirname, '../src/data/content.json');
+const BACKUP_DIR = path.join(__dirname, '../src/data/backups');
+let contentVersion = 1;
+
+const isStringArray = (value) => Array.isArray(value) && value.every((item) => typeof item === 'string');
+const isRecordArray = (value) => Array.isArray(value) && value.every((item) => item && typeof item === 'object');
+
+const validateContent = (content) => {
+    const errors = [];
+    if (!content || typeof content !== 'object') {
+        errors.push('Content must be an object.');
+        return errors;
+    }
+    if (!content.meta || Number(content.meta.schemaVersion) !== 2) {
+        errors.push('meta.schemaVersion must be 2.');
+    }
+    if (typeof content.meta?.updatedAt !== 'string') {
+        errors.push('meta.updatedAt must be a valid ISO string.');
+    }
+    if (!isRecordArray(content.projects)) {
+        errors.push('projects must be an array.');
+    }
+    if (!isRecordArray(content.writings)) {
+        errors.push('writings must be an array.');
+    }
+    if (!isRecordArray(content.curations)) {
+        errors.push('curations must be an array.');
+    }
+    if (!isRecordArray(content.footer)) {
+        errors.push('footer must be an array.');
+    }
+
+    (content.projects || []).forEach((project, index) => {
+        if (typeof project.slug !== 'string' || !project.slug.trim()) errors.push(`projects[${index}].slug is required.`);
+        if (typeof project.title !== 'string' || !project.title.trim()) errors.push(`projects[${index}].title is required.`);
+        if (!isStringArray(project.tags || [])) errors.push(`projects[${index}].tags must be string array.`);
+    });
+
+    (content.writings || []).forEach((writing, index) => {
+        if (typeof writing.slug !== 'string' || !writing.slug.trim()) errors.push(`writings[${index}].slug is required.`);
+        if (typeof writing.title !== 'string' || !writing.title.trim()) errors.push(`writings[${index}].title is required.`);
+        if (!isStringArray(writing.tags || [])) errors.push(`writings[${index}].tags must be string array.`);
+    });
+
+    (content.curations || []).forEach((curation, index) => {
+        if (typeof curation.slug !== 'string' || !curation.slug.trim()) errors.push(`curations[${index}].slug is required.`);
+        if (typeof curation.title !== 'string' || !curation.title.trim()) errors.push(`curations[${index}].title is required.`);
+        if (!isStringArray(curation.tags || [])) errors.push(`curations[${index}].tags must be string array.`);
+    });
+
+    return errors;
+};
+
+const contentChecksum = (content) =>
+    crypto.createHash('sha256').update(JSON.stringify(content)).digest('hex');
+
+const readContent = async () => {
+    const fileContent = await fsp.readFile(CONTENT_FILE_PATH, 'utf-8');
+    const cleaned = fileContent.replace(/^\uFEFF/, '').trimStart();
+    try {
+        return JSON.parse(cleaned);
+    } catch {
+        const firstBrace = cleaned.indexOf('{');
+        if (firstBrace >= 0) {
+            return JSON.parse(cleaned.slice(firstBrace));
+        }
+        throw new Error('Invalid content JSON');
+    }
+};
+
+const ensureBackupDir = async () => {
+    if (!fs.existsSync(BACKUP_DIR)) {
+        await fsp.mkdir(BACKUP_DIR, { recursive: true });
+    }
+};
+
+const backupContentSnapshot = async (content) => {
+    await ensureBackupDir();
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filePath = path.join(BACKUP_DIR, `content-${timestamp}.json`);
+    await fsp.writeFile(filePath, JSON.stringify(content, null, 2), 'utf-8');
+    return filePath;
+};
 
 app.get('/api/content', verifyPassword, async (req, res) => {
     try {
-        const fileContent = await fsp.readFile(CONTENT_FILE_PATH, 'utf-8');
-        res.json(JSON.parse(fileContent));
+        const content = await readContent();
+        res.json({
+            data: content,
+            schemaVersion: Number(content?.meta?.schemaVersion || 2),
+            checksum: contentChecksum(content),
+            version: contentVersion
+        });
     } catch (error) {
         console.error('Error reading content:', error);
         res.status(500).json({ error: 'Failed to read content file' });
     }
 });
 
+app.post('/api/content/validate', verifyPassword, async (req, res) => {
+    const body = req.body || {};
+    const errors = validateContent(body.data);
+    if (errors.length > 0) {
+        return res.status(400).json({ valid: false, errors });
+    }
+    return res.json({ valid: true, errors: [] });
+});
+
+app.post('/api/content/backup', verifyPassword, async (req, res) => {
+    try {
+        const content = await readContent();
+        const pathWritten = await backupContentSnapshot(content);
+        res.json({ success: true, path: pathWritten });
+    } catch (error) {
+        console.error('Error backing up content:', error);
+        res.status(500).json({ error: 'Backup failed' });
+    }
+});
+
 app.post('/api/content', verifyPassword, async (req, res) => {
     try {
-        const newContent = req.body;
-        if (!newContent.projectsData || !newContent.writingsData || !newContent.curationsData || !newContent.footerData) {
-            return res.status(400).json({ error: 'Invalid content format.' });
+        const { data, expectedVersion } = req.body || {};
+        if (Number(expectedVersion) !== contentVersion) {
+            return res.status(409).json({ error: 'Version conflict. Please refresh content and retry.' });
         }
-        await fsp.writeFile(CONTENT_FILE_PATH, JSON.stringify(newContent, null, 2), 'utf-8');
-        res.json({ success: true, message: 'Content updated successfully via Admin OS.' });
+
+        const errors = validateContent(data);
+        if (errors.length > 0) {
+            return res.status(400).json({ error: 'Invalid content format.', errors });
+        }
+
+        const oldContent = await readContent();
+        await backupContentSnapshot(oldContent);
+        const nextContent = {
+            ...data,
+            meta: {
+                ...data.meta,
+                schemaVersion: 2,
+                updatedAt: new Date().toISOString(),
+            }
+        };
+        await fsp.writeFile(CONTENT_FILE_PATH, JSON.stringify(nextContent, null, 2), 'utf-8');
+        contentVersion += 1;
+        res.json({
+            success: true,
+            message: 'Content updated successfully via Admin OS.',
+            version: contentVersion,
+            checksum: contentChecksum(nextContent)
+        });
     } catch (error) {
         console.error('Error writing content:', error);
         res.status(500).json({ error: 'Failed to write content file' });
@@ -79,9 +239,9 @@ app.post('/api/content', verifyPassword, async (req, res) => {
 // Sources: Google Books, OpenLibrary, iTunes, Deezer, Last.fm, MusicBrainz,
 //          TheAudioDB, Discogs, TVMaze, Jikan (MyAnimeList)
 // ============================================================================
-const LASTFM_API_KEY = '4cb074e4b8ec4ee9ad3eb37d6f7eb240'; // Public demo key
-const TMDB_API_KEY = '2dca580c2a14b55200e784d157207b4d'; // Free public TMDB key
-const OMDB_API_KEY = '4a3b711b'; // Free OMDb key
+const LASTFM_API_KEY = process.env.LASTFM_API_KEY || '';
+const TMDB_API_KEY = process.env.TMDB_API_KEY || '';
+const OMDB_API_KEY = process.env.OMDB_API_KEY || '';
 
 app.get('/api/search', verifyPassword, async (req, res) => {
     const { q, type } = req.query;
@@ -93,8 +253,6 @@ app.get('/api/search', verifyPassword, async (req, res) => {
     try {
         // ==================== BOOKS ====================
         if (type === 'Book' || !type) {
-            const isChinese = /[\u4e00-\u9fff]/.test(q);
-
             // --- 1. Douban Frodo API (Native Chinese Books - Highest Priority) ---
             const doubanPromise = (async () => {
                 try {

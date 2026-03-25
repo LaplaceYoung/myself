@@ -1,20 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import Lenis from '@studio-freight/lenis';
 
 export const LenisProvider = ({ children }: { children: React.ReactNode }) => {
-    const [lenisInstance, setLenisInstance] = useState<Lenis | null>(null);
+    const lenisRef = useRef<Lenis | null>(null);
     const location = useLocation();
 
     useEffect(() => {
         const lenis = new Lenis({
-            duration: 1.2,
-            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            duration: 0.75,
+            easing: (t) => 1 - Math.pow(1 - t, 4),
             orientation: 'vertical',
             gestureOrientation: 'vertical',
             smoothWheel: true,
-            wheelMultiplier: 1,
-            touchMultiplier: 2,
+            wheelMultiplier: 1.08,
+            touchMultiplier: 1.25,
+            syncTouch: true,
             infinite: false,
         });
 
@@ -26,28 +27,29 @@ export const LenisProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         rafId = requestAnimationFrame(raf);
-        setLenisInstance(lenis);
+        lenisRef.current = lenis;
 
         return () => {
             cancelAnimationFrame(rafId);
             lenis.destroy();
-            setLenisInstance(null);
+            lenisRef.current = null;
         };
     }, []);
 
     // Scroll to top on route change and trigger resize
     useEffect(() => {
-        if (lenisInstance) {
-            lenisInstance.scrollTo(0, { immediate: true });
+        const lenis = lenisRef.current;
+        if (lenis) {
+            lenis.scrollTo(0, { immediate: true });
 
             // Wait for DOM to paint new route then resize Lenis
             const timeoutId = setTimeout(() => {
-                lenisInstance.resize();
+                lenis.resize();
             }, 100);
 
             return () => clearTimeout(timeoutId);
         }
-    }, [location.pathname, lenisInstance]);
+    }, [location.pathname]);
 
     return <>{children}</>;
 };

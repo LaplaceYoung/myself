@@ -1,558 +1,870 @@
-import { useState, useEffect } from 'react';
-import MDEditor from '@uiw/react-md-editor';
+﻿import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react';
+import type { FormEvent } from 'react';
 import styles from './AdminPanel.module.css';
+import type { ContentV2, CurationItem, Project, Writing } from '../types/content';
 
-const API_URL = 'http://127.0.0.1:3001/api/content';
+const MDEditor = lazy(() => import('@uiw/react-md-editor'));
+
+const API_BASE = 'http://127.0.0.1:3001/api';
+const SESSION_KEY = 'admin_pwd';
+const SESSION_AT = 'admin_login_at';
+const SESSION_TTL_MS = 2 * 60 * 60 * 1000;
+const DRAFT_KEY = 'admin_unsaved_content';
+
+type AdminTab = 'projects' | 'writings' | 'curations' | 'footer';
+type SearchType = 'Book' | 'Movie' | 'Music';
+
+interface ApiContentResponse {
+  data: ContentV2;
+  schemaVersion: number;
+  checksum: string;
+  version: number;
+}
+
+interface SearchResult {
+  source: string;
+  type: SearchType;
+  title: string;
+  author: string;
+  image: string;
+  description: string;
+}
+
+const tabNames: Record<AdminTab, string> = {
+  projects: '项目 Projects',
+  writings: '文章 Writings',
+  curations: '策展 Curations',
+  footer: '页脚 Footer',
+};
+
+const createProject = (): Project => ({
+  id: Date.now(),
+  slug: `project-${Date.now()}`,
+  title: '新项目标题',
+  role: 'Role / Position',
+  year: String(new Date().getFullYear()),
+  image: 'https://',
+  link: 'https://',
+  excerpt: '',
+  tags: [],
+  status: 'draft',
+  locale: 'bi',
+});
+
+const createWriting = (): Writing => ({
+  id: Date.now(),
+  slug: `writing-${Date.now()}`,
+  title: '新文章标题',
+  category: 'General',
+  date: new Date().toISOString().slice(0, 10),
+  image: 'https://',
+  excerpt: '',
+  content: '',
+  tags: [],
+  status: 'draft',
+  locale: 'zh',
+});
+
+const createCuration = (): CurationItem => ({
+  id: Date.now(),
+  slug: `curation-${Date.now()}`,
+  type: 'Book',
+  title: '新策展条目',
+  image: 'https://',
+  description: '',
+  tags: [],
+  status: 'published',
+  locale: 'zh',
+});
+
+const checksumOf = (value: ContentV2 | null): string => JSON.stringify(value);
 
 const AdminPanel = () => {
-    const [data, setData] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState<'projectsData' | 'writingsData' | 'curationsData' | 'footerData'>('projectsData');
-    const [saving, setSaving] = useState(false);
-    const [error, setError] = useState('');
+  const [data, setData] = useState<ContentV2 | null>(null);
+  const [activeTab, setActiveTab] = useState<AdminTab>('projects');
+  const [activeWritingId, setActiveWritingId] = useState<number | null>(null);
 
-    // Auth state
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [passwordInput, setPasswordInput] = useState('');
-    const [loginError, setLoginError] = useState('');
+  const [error, setError] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
 
-    // Scraper Search State
-    const [showSearchModal, setShowSearchModal] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [searchType, setSearchType] = useState('Book');
-    const [isSearching, setIsSearching] = useState(false);
-    const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [loginError, setLoginError] = useState('');
 
-    // Writings Detail State
-    const [activeWritingId, setActiveWritingId] = useState<number | null>(null);
-    const [isDraggingImage, setIsDraggingImage] = useState(false);
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchType, setSearchType] = useState<SearchType>('Book');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
-    // Custom UI Overrides for Native Components
-    const [toastMessage, setToastMessage] = useState('');
-    const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean, message: string, onConfirm: () => void } | null>(null);
+  const [writingsFilter, setWritingsFilter] = useState('');
+  const [sortByDate, setSortByDate] = useState<'desc' | 'asc'>('desc');
+  const [saving, setSaving] = useState(false);
 
-    const showToast = (msg: string) => {
-        setToastMessage(msg);
-        setTimeout(() => setToastMessage(''), 3000);
+  const [serverVersion, setServerVersion] = useState<number>(0);
+  const [lastSavedSnapshot, setLastSavedSnapshot] = useState('');
+  const [isDirty, setIsDirty] = useState(false);
+  const [deleteCandidate, setDeleteCandidate] = useState<{ id: number; label: string } | null>(null);
+
+  const dirtyRef = useRef(false);
+
+  const showToast = useCallback((msg: string) => {
+    setToastMessage(msg);
+    window.setTimeout(() => setToastMessage(''), 2400);
+  }, []);
+
+  const passwordFromSession = (): string | null => {
+    const saved = sessionStorage.getItem(SESSION_KEY);
+    const loginAtRaw = sessionStorage.getItem(SESSION_AT);
+    if (!saved || !loginAtRaw) {
+      return null;
+    }
+    const loginAt = Number(loginAtRaw);
+    if (!Number.isFinite(loginAt) || Date.now() - loginAt > SESSION_TTL_MS) {
+      sessionStorage.removeItem(SESSION_KEY);
+      sessionStorage.removeItem(SESSION_AT);
+      return null;
+    }
+    return saved;
+  };
+
+  const fetchContent = useCallback(async (pwd: string) => {
+    setError('');
+    try {
+      const res = await fetch(`${API_BASE}/content`, {
+        headers: {
+          'x-admin-password': pwd,
+        },
+      });
+      const payload = (await res.json()) as ApiContentResponse | { error: string };
+      if (!res.ok) {
+        throw new Error('error' in payload ? payload.error : 'Failed to fetch content');
+      }
+      const response = payload as ApiContentResponse;
+      setData(response.data);
+      setServerVersion(response.version);
+      setLastSavedSnapshot(checksumOf(response.data));
+      setActiveWritingId(response.data.writings[0]?.id ?? null);
+      setIsAuthenticated(true);
+      setLoginError('');
+      setIsDirty(false);
+      dirtyRef.current = false;
+      sessionStorage.setItem(SESSION_KEY, pwd);
+      sessionStorage.setItem(SESSION_AT, String(Date.now()));
+      sessionStorage.removeItem(DRAFT_KEY);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '未知错误';
+      if (!isAuthenticated) {
+        setLoginError(msg);
+      }
+      setError(msg);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    const pwd = passwordFromSession();
+    if (pwd) {
+      void fetchContent(pwd);
+    }
+  }, [fetchContent]);
+
+  useEffect(() => {
+    if (!data) {
+      return;
+    }
+    const nextChecksum = checksumOf(data);
+    const dirty = nextChecksum !== lastSavedSnapshot;
+    setIsDirty(dirty);
+    dirtyRef.current = dirty;
+    if (dirty) {
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+    }
+  }, [data, lastSavedSnapshot]);
+
+  useEffect(() => {
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!dirtyRef.current) {
+        return;
+      }
+      event.preventDefault();
+      event.returnValue = '';
     };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, []);
 
-    // Fetch data only after authentication
-    const fetchData = async (pwd: string) => {
-        try {
-            console.log("[Admin OS] Attempting connection to", API_URL);
-            const res = await fetch(API_URL, {
-                headers: {
-                    'x-admin-password': pwd
-                }
-            });
-            if (!res.ok) {
-                if (res.status === 401) throw new Error("密码错误 (Invalid Password)");
-                throw new Error(`服务器响应异常: ${res.status}`);
-            }
-            const jsonData = await res.json();
-            setData(jsonData);
-            setIsAuthenticated(true);
-            setLoginError('');
-            // Store temporarily in session
-            sessionStorage.setItem('admin_pwd', pwd);
-        } catch (err: any) {
-            console.error("[Admin OS] Connection failed:", err);
-            const displayMsg = err.message === 'Failed to fetch'
-                ? "无法连接到后台服务器。请确保在终端运行了 'npm run admin' 并且端口 3001 未被占用。"
-                : err.message;
-            if (!isAuthenticated) setLoginError(displayMsg);
-            else setError(displayMsg);
-        }
-    };
+  const restoreFromDraft = () => {
+    const draft = sessionStorage.getItem(DRAFT_KEY);
+    if (!draft) {
+      showToast('没有可恢复草稿');
+      return;
+    }
+    try {
+      const parsed = JSON.parse(draft) as ContentV2;
+      setData(parsed);
+      showToast('已恢复草稿');
+    } catch {
+      showToast('草稿恢复失败');
+    }
+  };
 
-    useEffect(() => {
-        // Auto login if session exists
-        const savedPwd = sessionStorage.getItem('admin_pwd');
-        if (savedPwd) {
-            fetchData(savedPwd);
-        }
-    }, []);
+  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!passwordInput.trim()) {
+      setLoginError('请输入后台密码');
+      return;
+    }
+    await fetchContent(passwordInput.trim());
+  };
 
-    const handleLogin = (e: React.FormEvent) => {
-        e.preventDefault();
-        fetchData(passwordInput);
-    };
-
-    const handleSave = async () => {
-        setSaving(true);
-        const pwd = sessionStorage.getItem('admin_pwd') || '';
-        try {
-            const res = await fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-admin-password': pwd
-                },
-                body: JSON.stringify(data)
-            });
-            if (res.ok) {
-                showToast("成功保存并同步到本地代码库！(Sync Successful)");
-            } else {
-                showToast("保存失败，可能是密码过期或服务器断开。");
-            }
-        } catch (e) {
-            showToast("网络错误：请确保您的本地 admin 服务器正在运行。");
-        }
-        setSaving(false);
-    };
-
-    const handleFieldChange = (idx: number, field: string, value: string) => {
-        const newData = { ...data };
-        newData[activeTab][idx][field] = value;
-        setData(newData);
-    };
-
-    const handleAdd = () => {
-        const newData = { ...data };
-        const newItem: any = { id: Date.now() };
-        if (activeTab === 'projectsData') {
-            newItem.title = "新项目名称"; newItem.role = "角色/职位"; newItem.year = "2026"; newItem.image = "https://..."; newItem.link = "https://...";
-        } else if (activeTab === 'writingsData') {
-            newItem.title = "新文章标题"; newItem.date = "日期"; newItem.category = "分类"; newItem.image = "https://..."; newItem.content = "";
-        } else if (activeTab === 'footerData') {
-            newItem.email = "hello@example.com"; newItem.twitter_link = "https://..."; newItem.github_link = "https://..."; newItem.linkedin_link = "https://...";
-        } else {
-            newItem.type = "Book"; newItem.title = "策展标题"; newItem.image = "https://..."; newItem.description = "描述...";
-        }
-        newData[activeTab].unshift(newItem); // Add new items to the top
-        setData(newData);
-
-        // Auto select if it's a writing
-        if (activeTab === 'writingsData') {
-            setActiveWritingId(newItem.id);
-        }
-    };
-
-    const handleSearch = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!searchQuery.trim()) return;
-        setIsSearching(true);
-        setSearchResults([]);
-        const pwd = sessionStorage.getItem('admin_pwd') || '';
-        try {
-            const res = await fetch(`http://127.0.0.1:3001/api/search?q=${encodeURIComponent(searchQuery)}&type=${searchType}`, {
-                headers: { 'x-admin-password': pwd }
-            });
-            const json = await res.json();
-            if (res.ok) {
-                setSearchResults(json.results || []);
-            } else {
-                showToast(json.error || "搜索失败");
-            }
-        } catch (err) {
-            showToast("搜索请求发送失败。");
-        }
-        setIsSearching(false);
-    };
-
-    const handleImportResult = (result: any) => {
-        const newData = { ...data };
-        const newItem = {
-            id: Date.now(),
-            type: result.type,
-            title: result.title,
-            image: result.image,
-            description: result.description,
-        };
-        newData['curationsData'].unshift(newItem); // Add to top
-        setData(newData);
-        setShowSearchModal(false);
-    };
-
-    const handleDelete = (idx: number) => {
-        setConfirmDialog({
-            isOpen: true,
-            message: "确定要永久删除这个精美的项目吗？(Are you sure?)",
-            onConfirm: () => {
-                const newData = { ...data };
-                const deletedId = newData[activeTab][idx].id;
-                newData[activeTab].splice(idx, 1);
-                setData(newData);
-                if (activeTab === 'writingsData' && activeWritingId === deletedId) {
-                    setActiveWritingId(null);
-                }
-                setConfirmDialog(null);
-            }
-        });
-    };
-
-    const handleImageUpload = (idx: number, field: string, file: File) => {
-        const reader = new FileReader();
-        reader.onload = async () => {
-            const base64 = reader.result as string;
-            const pwd = sessionStorage.getItem('admin_pwd') || '';
-            try {
-                const res = await fetch('http://127.0.0.1:3001/api/upload', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-admin-password': pwd
-                    },
-                    body: JSON.stringify({ imageBase64: base64 })
-                });
-                const jsonData = await res.json();
-                if (res.ok && jsonData.url) {
-                    handleFieldChange(idx, field, jsonData.url);
-                } else {
-                    showToast("图片上传失败: " + jsonData.error);
-                }
-            } catch (e) {
-                showToast("网络错误无法上传图片");
-            }
-        };
-        reader.readAsDataURL(file);
-    };
-
-    const handleInlineImageUpload = (idx: number, file: File) => {
-        showToast("正在上传 Markdown 内容图片...");
-        const reader = new FileReader();
-        reader.onload = async () => {
-            const base64 = reader.result as string;
-            const pwd = sessionStorage.getItem('admin_pwd') || '';
-            try {
-                const res = await fetch('http://127.0.0.1:3001/api/upload', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-admin-password': pwd
-                    },
-                    body: JSON.stringify({ imageBase64: base64 })
-                });
-                const jsonData = await res.json();
-                if (res.ok && jsonData.url) {
-                    const newData = { ...data };
-                    const currentContent = newData['writingsData'][idx].content || '';
-                    newData['writingsData'][idx].content = currentContent + `\n![插入的图片](${jsonData.url})\n`;
-                    setData(newData);
-                    showToast("内容图片插入成功！");
-                } else {
-                    showToast("图片上传失败: " + jsonData.error);
-                }
-            } catch (e) {
-                showToast("网络错误无法上传图片");
-            }
-        };
-        reader.readAsDataURL(file);
-    };
-
-    const handleDrop = (e: React.DragEvent, idx: number, field: string) => {
-        e.preventDefault();
-        setIsDraggingImage(false);
-        const file = e.dataTransfer.files[0];
-        if (file && file.type.startsWith('image/')) {
-            handleImageUpload(idx, field, file);
-        }
-    };
-
-    if (!isAuthenticated) {
-        return (
-            <div className={styles.loginScreen}>
-                <div className={styles.loginBox}>
-                    <h2>认证访问 (Admin OS)</h2>
-                    <p>请输入本地管理后台密码 (默认: <strong>admin888</strong>)</p>
-                    <form onSubmit={handleLogin} className={styles.loginForm}>
-                        <input
-                            type="password"
-                            value={passwordInput}
-                            onChange={(e) => setPasswordInput(e.target.value)}
-                            placeholder="••••••••"
-                            className={styles.pwdInput}
-                            autoFocus
-                        />
-                        <button type="submit" className={styles.loginBtn}>解锁系统 (Unlock)</button>
-                    </form>
-                    {loginError && <p className={styles.loginErrorText}>{loginError}</p>}
-                    <a href="/" className={styles.backSiteLink}>← 返回前台主页</a>
-                </div>
-            </div>
-        );
+  const saveContent = async () => {
+    if (!data) {
+      return;
+    }
+    const pwd = passwordFromSession();
+    if (!pwd) {
+      setIsAuthenticated(false);
+      setLoginError('会话已过期，请重新登录');
+      return;
     }
 
-    if (error) {
-        return <div className={styles.errorScreen}>
-            <h2>连接服务器被拒绝 (Connection Refused)</h2>
-            <p>{error}</p>
-            <p>请在终端中结束当前进程，并重新全量运行 <code>npm run admin</code> 命令。</p>
-            <a href="/" className={styles.btn}>← 返回前台主页</a>
-        </div>;
+    setSaving(true);
+    try {
+      const validateRes = await fetch(`${API_BASE}/content/validate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-password': pwd,
+        },
+        body: JSON.stringify({ data }),
+      });
+      const validatePayload = (await validateRes.json()) as { valid: boolean; errors?: string[]; error?: string };
+      if (!validateRes.ok || !validatePayload.valid) {
+        const reason = validatePayload.errors?.join('；') || validatePayload.error || '内容校验失败';
+        throw new Error(reason);
+      }
+
+      await fetch(`${API_BASE}/content/backup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-password': pwd,
+        },
+      });
+
+      const saveRes = await fetch(`${API_BASE}/content`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-password': pwd,
+        },
+        body: JSON.stringify({ data, expectedVersion: serverVersion }),
+      });
+      const savePayload = (await saveRes.json()) as { version?: number; checksum?: string; error?: string };
+      if (!saveRes.ok) {
+        throw new Error(savePayload.error || '保存失败');
+      }
+
+      setServerVersion(savePayload.version ?? serverVersion);
+      setLastSavedSnapshot(checksumOf(data));
+      setIsDirty(false);
+      dirtyRef.current = false;
+      sessionStorage.removeItem(DRAFT_KEY);
+      showToast('发布成功，内容已同步');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '保存失败');
+      showToast('保存失败，请检查错误信息');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateData = (updater: (prev: ContentV2) => ContentV2) => {
+    setData((prev) => (prev ? updater(prev) : prev));
+  };
+
+  const handleAdd = () => {
+    if (!data) {
+      return;
     }
 
-    if (!data) return <div className={styles.loading}>正在启动管理宇宙... Booting Admin OS...</div>;
+    if (activeTab === 'projects') {
+      updateData((prev) => ({ ...prev, projects: [createProject(), ...prev.projects] }));
+      return;
+    }
 
-    const tabNames: Record<string, string> = {
-        projectsData: '精选作品 (Projects)',
-        writingsData: '杂文与笔记 (Writings)',
-        curationsData: '私人策展 (Curations)',
-        footerData: '页脚设置 (Footer)'
-    };
+    if (activeTab === 'writings') {
+      const next = createWriting();
+      updateData((prev) => ({ ...prev, writings: [next, ...prev.writings] }));
+      setActiveWritingId(next.id);
+      return;
+    }
 
+    if (activeTab === 'curations') {
+      updateData((prev) => ({ ...prev, curations: [createCuration(), ...prev.curations] }));
+      return;
+    }
+
+    updateData((prev) => ({
+      ...prev,
+      footer: [
+        {
+          id: Date.now(),
+          email: 'hello@example.com',
+          twitter_link: 'https://',
+          github_link: 'https://',
+          linkedin_link: 'https://',
+          location: 'Shanghai, China',
+          credibility: 'Trusted by product teams',
+        },
+      ],
+    }));
+  };
+
+  const executeDelete = (id: number) => {
+
+    if (activeTab === 'projects') {
+      updateData((prev) => ({ ...prev, projects: prev.projects.filter((item) => item.id !== id) }));
+      return;
+    }
+
+    if (activeTab === 'writings') {
+      updateData((prev) => ({ ...prev, writings: prev.writings.filter((item) => item.id !== id) }));
+      if (activeWritingId === id) {
+        setActiveWritingId(null);
+      }
+      return;
+    }
+
+    if (activeTab === 'curations') {
+      updateData((prev) => ({ ...prev, curations: prev.curations.filter((item) => item.id !== id) }));
+      return;
+    }
+
+    updateData((prev) => ({ ...prev, footer: prev.footer.filter((item) => item.id !== id) }));
+  };
+
+  const handleDelete = (id: number, label: string) => {
+    setDeleteCandidate({ id, label });
+  };
+
+  const updateProjectField = (id: number, field: keyof Project, value: string) => {
+    updateData((prev) => ({
+      ...prev,
+      projects: prev.projects.map((item) => {
+        if (item.id !== id) {
+          return item;
+        }
+        if (field === 'tags') {
+          return { ...item, tags: value.split(',').map((tag) => tag.trim()).filter(Boolean) };
+        }
+        if (field === 'status') {
+          return { ...item, status: value as Project['status'] };
+        }
+        if (field === 'locale') {
+          return { ...item, locale: value as Project['locale'] };
+        }
+        return { ...item, [field]: value };
+      }),
+    }));
+  };
+
+  const updateWritingField = (id: number, field: keyof Writing, value: string) => {
+    updateData((prev) => ({
+      ...prev,
+      writings: prev.writings.map((item) => {
+        if (item.id !== id) {
+          return item;
+        }
+        if (field === 'tags') {
+          return { ...item, tags: value.split(',').map((tag) => tag.trim()).filter(Boolean) };
+        }
+        if (field === 'status') {
+          return { ...item, status: value as Writing['status'] };
+        }
+        if (field === 'locale') {
+          return { ...item, locale: value as Writing['locale'] };
+        }
+        return { ...item, [field]: value };
+      }),
+    }));
+  };
+
+  const updateCurationField = (id: number, field: keyof CurationItem, value: string) => {
+    updateData((prev) => ({
+      ...prev,
+      curations: prev.curations.map((item) => {
+        if (item.id !== id) {
+          return item;
+        }
+        if (field === 'tags') {
+          return { ...item, tags: value.split(',').map((tag) => tag.trim()).filter(Boolean) };
+        }
+        if (field === 'type') {
+          return { ...item, type: value as CurationItem['type'] };
+        }
+        if (field === 'status') {
+          return { ...item, status: value as CurationItem['status'] };
+        }
+        if (field === 'locale') {
+          return { ...item, locale: value as CurationItem['locale'] };
+        }
+        return { ...item, [field]: value };
+      }),
+    }));
+  };
+
+  const updateFooterField = (id: number, field: 'email' | 'twitter_link' | 'github_link' | 'linkedin_link' | 'location' | 'credibility', value: string) => {
+    updateData((prev) => ({
+      ...prev,
+      footer: prev.footer.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
+    }));
+  };
+
+  const searchScraper = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!searchQuery.trim()) {
+      return;
+    }
+    const pwd = passwordFromSession();
+    if (!pwd) {
+      setIsAuthenticated(false);
+      return;
+    }
+
+    setIsSearching(true);
+    setSearchResults([]);
+    try {
+      const res = await fetch(`${API_BASE}/search?q=${encodeURIComponent(searchQuery)}&type=${searchType}`, {
+        headers: { 'x-admin-password': pwd },
+      });
+      const payload = (await res.json()) as { results?: SearchResult[]; error?: string };
+      if (!res.ok) {
+        throw new Error(payload.error || '搜索失败');
+      }
+      setSearchResults(payload.results ?? []);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : '搜索失败');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const importSearchResult = (result: SearchResult) => {
+    updateData((prev) => ({
+      ...prev,
+      curations: [
+        {
+          id: Date.now(),
+          slug: `curation-${Date.now()}`,
+          type: result.type,
+          title: result.title,
+          image: result.image,
+          description: result.description,
+          tags: [result.source],
+          status: 'published',
+          locale: 'bi',
+        },
+        ...prev.curations,
+      ],
+    }));
+    setShowSearchModal(false);
+    showToast('条目已导入到策展草稿');
+  };
+
+  const uploadImage = async (file: File): Promise<string> => {
+    const pwd = passwordFromSession();
+    if (!pwd) {
+      throw new Error('会话已过期，请重新登录');
+    }
+
+    const base64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error('文件读取失败'));
+      reader.readAsDataURL(file);
+    });
+
+    const res = await fetch(`${API_BASE}/upload`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-password': pwd,
+      },
+      body: JSON.stringify({ imageBase64: base64 }),
+    });
+
+    const payload = (await res.json()) as { url?: string; error?: string };
+    if (!res.ok || !payload.url) {
+      throw new Error(payload.error || '上传失败');
+    }
+
+    return payload.url;
+  };
+
+  const filteredWritings = useMemo(() => {
+    if (!data) {
+      return [];
+    }
+    const keyword = writingsFilter.trim().toLowerCase();
+    const list = data.writings.filter((item) => {
+      if (!keyword) {
+        return true;
+      }
+      return [item.title, item.category, item.excerpt, item.tags.join(',')]
+        .join(' ')
+        .toLowerCase()
+        .includes(keyword);
+    });
+
+    return list.sort((a, b) => {
+      if (sortByDate === 'desc') {
+        return b.date.localeCompare(a.date);
+      }
+      return a.date.localeCompare(b.date);
+    });
+  }, [data, sortByDate, writingsFilter]);
+
+  if (!isAuthenticated) {
     return (
-        <div className={styles.adminOs} data-lenis-prevent="true">
-            <header className={styles.header}>
-                <div className={styles.headerLeft}>
-                    <a href="/" className={styles.backLink}>← 返回展厅</a>
-                    <h1 className={styles.title}>后台管理系统</h1>
-                </div>
-                <button onClick={handleSave} className={styles.saveBtn} disabled={saving}>
-                    {saving ? '正在同步网络...' : '发布并保存更改'}
+      <div className={styles.loginScreen}>
+        <div className={styles.loginBox}>
+          <h2>后台认证</h2>
+          <p>请输入本地管理密码（从环境变量 ADMIN_PASSWORD 读取）</p>
+          <form onSubmit={handleLogin} className={styles.loginForm}>
+            <input
+              type="password"
+              value={passwordInput}
+              onChange={(event) => setPasswordInput(event.target.value)}
+              placeholder="请输入管理密码"
+              className={styles.pwdInput}
+              autoFocus
+            />
+            <button type="submit" className={styles.loginBtn}>登录后台</button>
+          </form>
+          {loginError ? <p className={styles.loginErrorText}>{loginError}</p> : null}
+          <a href="/" className={styles.backSiteLink}>返回前台首页</a>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return <div className={styles.loading}>正在加载后台数据…</div>;
+  }
+
+  const activeWriting = data.writings.find((item) => item.id === activeWritingId) ?? null;
+
+  return (
+    <div className={styles.adminOs} data-lenis-prevent="true">
+      <header className={styles.header}>
+        <div className={styles.headerLeft}>
+          <a href="/" className={styles.backLink}>返回展厅</a>
+          <h1 className={styles.title}>后台管理系统</h1>
+        </div>
+        <div className={styles.headerActions}>
+          {isDirty ? <span className={styles.cardId}>未保存更改</span> : <span className={styles.cardId}>已同步</span>}
+          <button onClick={restoreFromDraft} className={styles.addBtn} type="button">恢复草稿</button>
+          <button onClick={saveContent} className={styles.saveBtn} disabled={saving} type="button">
+            {saving ? '发布中…' : '发布并保存'}
+          </button>
+        </div>
+      </header>
+
+      {error ? <div className={styles.errorScreen}><p>{error}</p></div> : null}
+
+      <div className={styles.workspace}>
+        <aside className={styles.sidebar}>
+          {(Object.keys(tabNames) as AdminTab[]).map((tab) => (
+            <button
+              key={tab}
+              className={activeTab === tab ? styles.tabActive : styles.tab}
+              onClick={() => setActiveTab(tab)}
+              type="button"
+            >
+              {tabNames[tab]}
+            </button>
+          ))}
+        </aside>
+
+        <main className={styles.editor}>
+          <div className={styles.editorHeader}>
+            <h2>正在管理：{tabNames[activeTab]}</h2>
+            <div className={styles.headerActions}>
+              {activeTab === 'curations' ? (
+                <button onClick={() => setShowSearchModal(true)} className={styles.searchScrapeBtn} type="button">
+                  智能抓取素材
                 </button>
-            </header>
+              ) : null}
+              <button onClick={handleAdd} className={styles.addBtn} type="button">+ 新增条目</button>
+            </div>
+          </div>
 
-            <div className={styles.workspace}>
-                <aside className={styles.sidebar}>
-                    <button
-                        className={activeTab === 'projectsData' ? styles.tabActive : styles.tab}
-                        onClick={() => setActiveTab('projectsData')}>
-                        {tabNames.projectsData}
-                    </button>
-                    <button
-                        className={activeTab === 'writingsData' ? styles.tabActive : styles.tab}
-                        onClick={() => setActiveTab('writingsData')}>
-                        {tabNames.writingsData}
-                    </button>
-                    <button
-                        className={activeTab === 'curationsData' ? styles.tabActive : styles.tab}
-                        onClick={() => setActiveTab('curationsData')}>
-                        {tabNames.curationsData}
-                    </button>
-                    <button
-                        className={activeTab === 'footerData' ? styles.tabActive : styles.tab}
-                        onClick={() => setActiveTab('footerData')}>
-                        {tabNames.footerData}
-                    </button>
-                </aside>
+          {activeTab === 'projects' ? (
+            <div className={styles.itemList}>
+              {data.projects.map((item) => (
+                <div key={item.id} className={styles.itemCard}>
+                  <div className={styles.cardHeader}>
+                    <span className={styles.cardId}>#{item.id}</span>
+                    <button onClick={() => handleDelete(item.id, item.title)} className={styles.delBtn} type="button">删除</button>
+                  </div>
+                  <div className={styles.fieldGrid}>
+                    <input className={styles.input} value={item.title} onChange={(event) => updateProjectField(item.id, 'title', event.target.value)} placeholder="标题" />
+                    <input className={styles.input} value={item.slug} onChange={(event) => updateProjectField(item.id, 'slug', event.target.value)} placeholder="slug" />
+                    <input className={styles.input} value={item.role} onChange={(event) => updateProjectField(item.id, 'role', event.target.value)} placeholder="角色" />
+                    <input className={styles.input} value={item.year} onChange={(event) => updateProjectField(item.id, 'year', event.target.value)} placeholder="年份" />
+                    <input className={styles.input} value={item.link} onChange={(event) => updateProjectField(item.id, 'link', event.target.value)} placeholder="链接" />
+                    <input className={styles.input} value={item.image} onChange={(event) => updateProjectField(item.id, 'image', event.target.value)} placeholder="封面图" />
+                    <input className={styles.input} value={item.excerpt} onChange={(event) => updateProjectField(item.id, 'excerpt', event.target.value)} placeholder="摘要" />
+                    <input className={styles.input} value={item.tags.join(', ')} onChange={(event) => updateProjectField(item.id, 'tags', event.target.value)} placeholder="标签，逗号分隔" />
+                    <select className={styles.input} value={item.status} onChange={(event) => updateProjectField(item.id, 'status', event.target.value)}>
+                      <option value="published">published</option>
+                      <option value="draft">draft</option>
+                    </select>
+                    <select className={styles.input} value={item.locale} onChange={(event) => updateProjectField(item.id, 'locale', event.target.value)}>
+                      <option value="bi">bi</option>
+                      <option value="zh">zh</option>
+                      <option value="en">en</option>
+                    </select>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
 
-                <main className={styles.editor}>
-                    <div className={styles.editorHeader}>
-                        <h2>正在管理: {tabNames[activeTab]}</h2>
-                        <div className={styles.headerActions}>
-                            {activeTab === 'curationsData' && (
-                                <button onClick={() => setShowSearchModal(true)} className={styles.searchScrapeBtn}>
-                                    资料库智能刮削 (Scrape)
-                                </button>
-                            )}
-                            <button onClick={handleAdd} className={styles.addBtn}>+ 手动新增区块</button>
-                        </div>
+          {activeTab === 'writings' ? (
+            <div className={styles.splitLayout}>
+              <div className={styles.splitSidebar}>
+                <input
+                  className={styles.input}
+                  value={writingsFilter}
+                  onChange={(event) => setWritingsFilter(event.target.value)}
+                  placeholder="搜索标题/标签/分类"
+                />
+                <button className={styles.addBtn} type="button" onClick={() => setSortByDate((prev) => (prev === 'desc' ? 'asc' : 'desc'))}>
+                  日期排序：{sortByDate === 'desc' ? '新到旧' : '旧到新'}
+                </button>
+                {filteredWritings.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`${styles.articleItem} ${activeWritingId === item.id ? styles.articleItemActive : ''}`}
+                    onClick={() => setActiveWritingId(item.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        setActiveWritingId(item.id);
+                      }
+                    }}
+                  >
+                    <div className={styles.articleTitle}>{item.title}</div>
+                    <div className={styles.articleMetaList}>{item.date} · {item.category}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div className={styles.splitContent}>
+                {activeWriting ? (
+                  <div className={styles.articleEditor}>
+                    <div className={styles.editorActionHeader}>
+                      <button onClick={() => handleDelete(activeWriting.id, activeWriting.title)} className={styles.delBtn} type="button">删除文章</button>
                     </div>
 
-                    {activeTab === 'writingsData' ? (
-                        <div className={styles.splitLayout}>
-                            <div className={styles.splitSidebar}>
-                                {data.writingsData.map((item: any) => (
-                                    <div
-                                        key={item.id}
-                                        className={`${styles.articleItem} ${activeWritingId === item.id ? styles.articleItemActive : ''}`}
-                                        onClick={() => setActiveWritingId(item.id)}
-                                    >
-                                        <div className={styles.articleTitle}>{item.title || '无标题文章'}</div>
-                                        <div className={styles.articleMetaList}>{item.date} · {item.category}</div>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className={styles.splitContent}>
-                                {activeWritingId ? (
-                                    (() => {
-                                        const idx = data.writingsData.findIndex((w: any) => w.id === activeWritingId);
-                                        if (idx === -1) return <div>文章未找到</div>;
-                                        const item = data.writingsData[idx];
-                                        return (
-                                            <div className={styles.articleEditor}>
-                                                <div className={styles.editorActionHeader}>
-                                                    <button onClick={() => handleDelete(idx)} className={styles.delBtn}>删除此文章</button>
-                                                </div>
-                                                <div
-                                                    className={`${styles.coverUploadArea} ${isDraggingImage ? styles.dragging : ''}`}
-                                                    onDragOver={(e) => { e.preventDefault(); setIsDraggingImage(true); }}
-                                                    onDragLeave={(e) => { e.preventDefault(); setIsDraggingImage(false); }}
-                                                    onDrop={(e) => handleDrop(e, idx, 'image')}
-                                                >
-                                                    <input
-                                                        className={styles.coverUrlInput}
-                                                        placeholder="输入封面图片 URL ...或将本地图片拖拽至此上传上传"
-                                                        value={item.image || ''}
-                                                        onChange={(e) => handleFieldChange(idx, 'image', e.target.value)}
-                                                    />
-                                                    {item.image && <img src={item.image} alt="Cover" className={styles.coverPreview} />}
-                                                </div>
-                                                <input
-                                                    className={styles.hugeTitleInput}
-                                                    value={item.title || ''}
-                                                    onChange={(e) => handleFieldChange(idx, 'title', e.target.value)}
-                                                    placeholder="文章大标题"
-                                                />
-                                                <div className={styles.articleMetaInputs}>
-                                                    <input
-                                                        className={styles.metaInput}
-                                                        value={item.date || ''}
-                                                        onChange={(e) => handleFieldChange(idx, 'date', e.target.value)}
-                                                        placeholder="发布日期 (如: Oct 12, 2025)"
-                                                    />
-                                                    <input
-                                                        className={styles.metaInput}
-                                                        value={item.category || ''}
-                                                        onChange={(e) => handleFieldChange(idx, 'category', e.target.value)}
-                                                        placeholder="文章分类 (如: Design)"
-                                                    />
-                                                </div>
+                    <input className={styles.hugeTitleInput} value={activeWriting.title} onChange={(event) => updateWritingField(activeWriting.id, 'title', event.target.value)} placeholder="文章标题" />
 
-                                                <div
-                                                    className={styles.mdEditorWrapper}
-                                                    data-color-mode="light"
-                                                    onDrop={(e) => {
-                                                        e.preventDefault();
-                                                        const file = e.dataTransfer.files[0];
-                                                        if (file && file.type.startsWith('image/')) {
-                                                            handleInlineImageUpload(idx, file);
-                                                        }
-                                                    }}
-                                                    onPaste={(e) => {
-                                                        const file = e.clipboardData.files[0];
-                                                        if (file && file.type.startsWith('image/')) {
-                                                            e.preventDefault();
-                                                            handleInlineImageUpload(idx, file);
-                                                        }
-                                                    }}
-                                                >
-                                                    <MDEditor
-                                                        value={item.content || ''}
-                                                        onChange={(val) => handleFieldChange(idx, 'content', val || '')}
-                                                        height={550}
-                                                        preview="edit"
-                                                        visibleDragbar={true}
-                                                        className={styles.mdEditor}
-                                                    />
-                                                    <div className={styles.editorHint}>支持将本地图片直接粘贴 (Paste) 或拖拽 (Drop) 进编辑器中。自动填入文档。</div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })()
-                                ) : (
-                                    <div className={styles.emptyEditorState}>
-                                        <div>请在左侧选择一篇文章开始全屏专注编辑</div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    ) : (
-                        <div className={styles.itemList}>
-                            {data[activeTab].map((item: any, idx: number) => (
-                                <div key={item.id} className={styles.itemCard}>
-                                    <div className={styles.cardHeader}>
-                                        <span className={styles.cardId}>区块 {idx + 1}</span>
-                                        <button onClick={() => handleDelete(idx)} className={styles.delBtn}>删除此区块</button>
-                                    </div>
-                                    <div className={styles.fieldGrid}>
-                                        {Object.keys(item).filter(k => k !== 'id' && k !== 'content').map(field => (
-                                            <div key={field} className={field === 'description' || field === 'image' || field === 'link' ? styles.fullField : styles.field}>
-                                                <label>{field.toUpperCase()}</label>
-                                                {field === 'description' ? (
-                                                    <textarea
-                                                        value={item[field] || ''}
-                                                        onChange={(e) => handleFieldChange(idx, field, e.target.value)}
-                                                        rows={3}
-                                                        className={styles.input}
-                                                    />
-                                                ) : (
-                                                    <input
-                                                        type="text"
-                                                        value={item[field] || ''}
-                                                        onChange={(e) => handleFieldChange(idx, field, e.target.value)}
-                                                        className={styles.input}
-                                                    />
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </main>
+                    <div className={styles.articleMetaInputs}>
+                      <input className={styles.metaInput} value={activeWriting.date} onChange={(event) => updateWritingField(activeWriting.id, 'date', event.target.value)} placeholder="发布日期" />
+                      <input className={styles.metaInput} value={activeWriting.category} onChange={(event) => updateWritingField(activeWriting.id, 'category', event.target.value)} placeholder="分类" />
+                      <input className={styles.metaInput} value={activeWriting.slug} onChange={(event) => updateWritingField(activeWriting.id, 'slug', event.target.value)} placeholder="Slug" />
+                    </div>
+
+                    <input className={styles.input} value={activeWriting.image ?? ''} onChange={(event) => updateWritingField(activeWriting.id, 'image', event.target.value)} placeholder="封面图 URL" />
+                    <input className={styles.input} value={activeWriting.excerpt} onChange={(event) => updateWritingField(activeWriting.id, 'excerpt', event.target.value)} placeholder="摘要" />
+                    <input className={styles.input} value={activeWriting.tags.join(', ')} onChange={(event) => updateWritingField(activeWriting.id, 'tags', event.target.value)} placeholder="标签，逗号分隔" />
+                    <div className={styles.articleMetaInputs}>
+                      <select className={styles.metaInput} value={activeWriting.status} onChange={(event) => updateWritingField(activeWriting.id, 'status', event.target.value)}>
+                        <option value="published">published</option>
+                        <option value="draft">draft</option>
+                      </select>
+                      <select className={styles.metaInput} value={activeWriting.locale} onChange={(event) => updateWritingField(activeWriting.id, 'locale', event.target.value)}>
+                        <option value="bi">bi</option>
+                        <option value="zh">zh</option>
+                        <option value="en">en</option>
+                      </select>
+                    </div>
+
+                    <div className={styles.mdEditorWrapper} data-color-mode="light">
+                      <Suspense fallback={<div className={styles.loading}>编辑器加载中…</div>}>
+                        <MDEditor
+                          value={activeWriting.content ?? ''}
+                          onChange={(value) => updateWritingField(activeWriting.id, 'content', value ?? '')}
+                          height={520}
+                          preview="edit"
+                          className={styles.mdEditor}
+                        />
+                      </Suspense>
+
+                      <div className={styles.editorActionHeader}>
+                        <label className={styles.addBtn}>
+                          上传并插入图片
+                          <input
+                            hidden
+                            type="file"
+                            accept="image/*"
+                            onChange={async (event) => {
+                              const file = event.target.files?.[0];
+                              if (!file) {
+                                return;
+                              }
+                              try {
+                                const url = await uploadImage(file);
+                                const current = activeWriting.content ?? '';
+                                updateWritingField(activeWriting.id, 'content', `${current}\n![image](${url})\n`);
+                                showToast('图片上传成功');
+                              } catch (err) {
+                                showToast(err instanceof Error ? err.message : '上传失败');
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className={styles.emptyEditorState}>请选择一篇文章开始编辑。</div>
+                )}
+              </div>
+            </div>
+          ) : null}
+
+          {activeTab === 'curations' ? (
+            <div className={styles.itemList}>
+              {data.curations.map((item) => (
+                <div key={item.id} className={styles.itemCard}>
+                  <div className={styles.cardHeader}>
+                    <span className={styles.cardId}>#{item.id}</span>
+                    <button onClick={() => handleDelete(item.id, item.title)} className={styles.delBtn} type="button">删除</button>
+                  </div>
+                  <div className={styles.fieldGrid}>
+                    <select className={styles.input} value={item.type} onChange={(event) => updateCurationField(item.id, 'type', event.target.value)}>
+                      <option value="Book">Book</option>
+                      <option value="Movie">Movie</option>
+                      <option value="Music">Music</option>
+                    </select>
+                    <input className={styles.input} value={item.title} onChange={(event) => updateCurationField(item.id, 'title', event.target.value)} placeholder="标题" />
+                    <input className={styles.input} value={item.slug} onChange={(event) => updateCurationField(item.id, 'slug', event.target.value)} placeholder="slug" />
+                    <input className={styles.input} value={item.image} onChange={(event) => updateCurationField(item.id, 'image', event.target.value)} placeholder="封面图" />
+                    <input className={styles.input} value={item.description} onChange={(event) => updateCurationField(item.id, 'description', event.target.value)} placeholder="描述" />
+                    <input className={styles.input} value={item.tags.join(', ')} onChange={(event) => updateCurationField(item.id, 'tags', event.target.value)} placeholder="标签，逗号分隔" />
+                    <select className={styles.input} value={item.status} onChange={(event) => updateCurationField(item.id, 'status', event.target.value)}>
+                      <option value="published">published</option>
+                      <option value="draft">draft</option>
+                    </select>
+                    <select className={styles.input} value={item.locale} onChange={(event) => updateCurationField(item.id, 'locale', event.target.value)}>
+                      <option value="bi">bi</option>
+                      <option value="zh">zh</option>
+                      <option value="en">en</option>
+                    </select>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {activeTab === 'footer' ? (
+            <div className={styles.itemList}>
+              {data.footer.map((item) => (
+                <div key={item.id} className={styles.itemCard}>
+                  <div className={styles.fieldGrid}>
+                    <input className={styles.input} value={item.email} onChange={(event) => updateFooterField(item.id, 'email', event.target.value)} placeholder="邮箱" />
+                    <input className={styles.input} value={item.location} onChange={(event) => updateFooterField(item.id, 'location', event.target.value)} placeholder="位置" />
+                    <input className={styles.input} value={item.credibility} onChange={(event) => updateFooterField(item.id, 'credibility', event.target.value)} placeholder="可信背书" />
+                    <input className={styles.input} value={item.twitter_link} onChange={(event) => updateFooterField(item.id, 'twitter_link', event.target.value)} placeholder="Twitter" />
+                    <input className={styles.input} value={item.github_link} onChange={(event) => updateFooterField(item.id, 'github_link', event.target.value)} placeholder="GitHub" />
+                    <input className={styles.input} value={item.linkedin_link} onChange={(event) => updateFooterField(item.id, 'linkedin_link', event.target.value)} placeholder="LinkedIn" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </main>
+      </div>
+
+      {showSearchModal ? (
+        <div className={styles.modalOverlay} onClick={() => setShowSearchModal(false)}>
+          <div className={styles.searchModal} onClick={(event) => event.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2>素材抓取中心</h2>
+              <button className={styles.closeBtn} onClick={() => setShowSearchModal(false)} type="button">×</button>
             </div>
 
-            {/* Global Search & Scrape Modal */}
-            {showSearchModal && (
-                <div className={styles.modalOverlay} onClick={() => setShowSearchModal(false)}>
-                    <div className={styles.searchModal} onClick={(e) => e.stopPropagation()}>
-                        <div className={styles.modalHeader}>
-                            <h2>全球文化库智能刮削 (Google / iTunes API)</h2>
-                            <button className={styles.closeBtn} onClick={() => setShowSearchModal(false)}>✕</button>
-                        </div>
-                        <form onSubmit={handleSearch} className={styles.searchForm}>
-                            <select value={searchType} onChange={(e) => setSearchType(e.target.value)} className={styles.searchInput}>
-                                <option value="Book">书籍 (Books)</option>
-                                <option value="Movie">电影 (Movies)</option>
-                                <option value="Music">音乐专辑 (Music)</option>
-                            </select>
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="输入作品中英文名称..."
-                                className={styles.searchInput}
-                                style={{ flex: 1 }}
-                                autoFocus
-                            />
-                            <button type="submit" className={styles.searchBtn} disabled={isSearching}>
-                                {isSearching ? '检索中...' : '搜索资源'}
-                            </button>
-                        </form>
+            <form onSubmit={searchScraper} className={styles.searchForm}>
+              <select value={searchType} onChange={(event) => setSearchType(event.target.value as SearchType)} className={styles.searchInput}>
+                <option value="Book">Books</option>
+                <option value="Movie">Movies</option>
+                <option value="Music">Music</option>
+              </select>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="输入关键词，如 海子 / Blade Runner"
+                className={styles.searchInput}
+                style={{ flex: 1 }}
+              />
+              <button type="submit" className={styles.searchBtn} disabled={isSearching}>
+                {isSearching ? '搜索中…' : '搜索'}
+              </button>
+            </form>
 
-                        <div className={styles.searchResults}>
-                            {searchResults.length === 0 && !isSearching && (
-                                <div className={styles.emptyState}>输入书影音名称，自动拉取高清封面与简介。支持深度防重复。</div>
-                            )}
-                            {searchResults.map((res: any, idx: number) => {
-                                // Use proxy for Douban or other external images to ensure stability
-                                const displayImage = res.source === 'Douban' || res.image.includes('doubanio.com')
-                                    ? `http://127.0.0.1:3001/api/proxy-image?url=${encodeURIComponent(res.image)}`
-                                    : res.image;
-
-                                return (
-                                    <div key={idx} className={styles.resultItem}>
-                                        <img src={displayImage} alt={res.title} className={styles.resultImage} />
-                                        <div className={styles.resultMeta}>
-                                            <h3>{res.title}</h3>
-                                            <span className={styles.resultAuthor}>{res.author} · {res.source}</span>
-                                            <p className={styles.resultDesc}>{res.description.slice(0, 100)}{res.description.length > 100 ? '...' : ''}</p>
-                                        </div>
-                                        <button className={styles.importBtn} onClick={() => handleImportResult(res)}>
-                                            一键导入
-                                        </button>
-                                    </div>
-                                );
-                            })}
-                        </div>
+            <div className={styles.searchResults}>
+              {!searchResults.length && !isSearching ? <div className={styles.emptyState}>输入关键词后可一键导入。</div> : null}
+              {searchResults.map((result, index) => {
+                const displayImage = result.source === 'Douban' || result.image.includes('doubanio.com')
+                  ? `${API_BASE}/proxy-image?url=${encodeURIComponent(result.image)}`
+                  : result.image;
+                return (
+                  <div key={`${result.title}-${index}`} className={styles.resultItem}>
+                    <img src={displayImage} alt={result.title} className={styles.resultImage} />
+                    <div className={styles.resultMeta}>
+                      <h3>{result.title}</h3>
+                      <span className={styles.resultAuthor}>{result.author} · {result.source}</span>
+                      <p className={styles.resultDesc}>{result.description?.slice(0, 120)}</p>
                     </div>
-                </div>
-            )}
-
-            {/* Custom Confirm Dialog */}
-            {confirmDialog && confirmDialog.isOpen && (
-                <div className={styles.modalOverlay} onClick={() => setConfirmDialog(null)}>
-                    <div className={styles.confirmBox} onClick={(e) => e.stopPropagation()}>
-                        <h3>执行确认 (Confirm)</h3>
-                        <p>{confirmDialog.message}</p>
-                        <div className={styles.confirmActions}>
-                            <button onClick={confirmDialog.onConfirm} className={styles.confirmConfirmBtn}>确认消除 (Confirm)</button>
-                            <button onClick={() => setConfirmDialog(null)} className={styles.confirmCancelBtn}>取消 (Cancel)</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Global Toast Message */}
-            {toastMessage && (
-                <div className={styles.toastMessage}>
-                    {toastMessage}
-                </div>
-            )}
+                    <button className={styles.importBtn} onClick={() => importSearchResult(result)} type="button">导入</button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
-    );
+      ) : null}
+
+      {toastMessage ? <div className={styles.toastMessage}>{toastMessage}</div> : null}
+      {deleteCandidate ? (
+        <div className={styles.modalOverlay} onClick={() => setDeleteCandidate(null)}>
+          <div className={styles.confirmBox} onClick={(event) => event.stopPropagation()}>
+            <h3>确认删除</h3>
+            <p>将永久删除「{deleteCandidate.label}」。此操作不可撤销。</p>
+            <div className={styles.confirmActions}>
+              <button className={styles.confirmCancelBtn} type="button" onClick={() => setDeleteCandidate(null)}>取消</button>
+              <button
+                className={styles.confirmConfirmBtn}
+                type="button"
+                onClick={() => {
+                  executeDelete(deleteCandidate.id);
+                  setDeleteCandidate(null);
+                  showToast('条目已删除');
+                }}
+              >
+                确认删除
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
 };
 
 export default AdminPanel;
