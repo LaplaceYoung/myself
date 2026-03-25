@@ -1,0 +1,5 @@
+<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M35 20V80H60" stroke="#2C2C2C" stroke-width="6" stroke-linecap="square" stroke-linejoin="miter"/>
+    <path d="M45 20L55 50L75 20 M55 50V85" stroke="#2C2C2C" stroke-width="4.5" stroke-linecap="square" stroke-linejoin="miter"/>
+    <path d="M20 75C40 75 50 25 80 25" stroke="#B85C38" stroke-width="2.5" stroke-linecap="round"/>
+</svg>
