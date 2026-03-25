@@ -1,6 +1,6 @@
 .panelShell {
   --panel-safe-top: clamp(4.3rem, 8.4vh, 5.8rem);
-  --panel-safe-bottom: clamp(5.8rem, 9.8vh, 7rem);
+  --panel-safe-bottom: clamp(5.8rem, 9.8vh, 7.2rem);
   --panel-content-height: calc(100dvh - var(--panel-safe-top) - var(--panel-safe-bottom));
   position: relative;
   width: 100%;
@@ -8,38 +8,28 @@
   padding: var(--panel-safe-top) 0 var(--panel-safe-bottom);
   overflow: hidden;
   isolation: isolate;
-}
-
-.panelTexture {
-  position: absolute;
-  inset: -18%;
-  pointer-events: none;
-  background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px) 0 0 / 5.6rem 5.6rem,
-    linear-gradient(0deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px) 0 0 / 5.6rem 5.6rem;
-  opacity: 0.14;
-  z-index: 0;
+  color: var(--surface-paper);
 }
 
 .panelShell :global(.container) {
   position: relative;
-  z-index: 1;
+  z-index: 3;
   width: min(calc(100% - 3.2rem), 1620px);
   height: min(100%, var(--panel-content-height));
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: clamp(0.72rem, 1.2vh, 1.14rem);
+  gap: clamp(0.78rem, 1.2vh, 1.18rem);
 }
 
 .panelTopline {
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.8rem;
   font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: color-mix(in oklab, var(--surface-paper) 62%, var(--accent-electric));
+  color: color-mix(in oklab, var(--surface-paper) 68%, var(--accent-electric));
 }
 
 .kicker {
@@ -47,39 +37,86 @@
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: color-mix(in oklab, var(--surface-paper) 66%, var(--accent-warm));
+  color: color-mix(in oklab, var(--surface-paper) 74%, var(--accent-warm));
+}
+
+.panelBackdrop,
+.heroVideoBackdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.panelBackdrop img,
+.heroVideo,
+.heroBackdropFallback {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.panelBackdrop img {
+  transform: scale(1.08);
+}
+
+.panelBackdropVeil {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(8, 8, 10, 0.72) 0%, rgba(8, 8, 10, 0.4) 52%, rgba(8, 8, 10, 0.76) 100%),
+    linear-gradient(180deg, rgba(8, 8, 10, 0.18) 0%, rgba(8, 8, 10, 0.8) 100%);
+}
+
+.projectsBackdrop img {
+  filter: blur(2.5px) saturate(0.82) brightness(0.48);
+}
+
+.writingsBackdrop img {
+  filter: blur(2px) saturate(0.74) brightness(0.43);
+}
+
+.curationsBackdrop img {
+  filter: blur(3px) saturate(0.72) brightness(0.38);
+}
+
+.heroVideo {
+  filter: saturate(0.82) brightness(0.52) contrast(1.03);
+}
+
+.heroBackdropFallback {
+  position: absolute;
+  inset: 0;
+  filter: saturate(0.76) brightness(0.5);
+}
+
+.heroVignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 72% 24%, rgba(244, 165, 92, 0.24) 0%, transparent 34%),
+    radial-gradient(circle at 16% 70%, rgba(65, 144, 194, 0.28) 0%, transparent 40%),
+    linear-gradient(90deg, rgba(8, 8, 10, 0.76) 0%, rgba(8, 8, 10, 0.44) 46%, rgba(8, 8, 10, 0.7) 100%),
+    linear-gradient(180deg, rgba(8, 8, 10, 0.25) 0%, rgba(8, 8, 10, 0.82) 100%);
+}
+
+.panelTexture {
+  position: absolute;
+  inset: -18%;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px) 0 0 / 5.6rem 5.6rem,
+    linear-gradient(0deg, rgba(255, 255, 255, 0.038) 1px, transparent 1px) 0 0 / 5.6rem 5.6rem;
+  opacity: 0.14;
 }
 
 .heroPanel,
 .projectsPanel,
 .writingsPanel,
 .curationsPanel {
-  color: var(--surface-paper);
-  background: linear-gradient(180deg, color-mix(in oklab, var(--surface-ink) 94%, black) 0%, var(--surface-ink) 100%);
-}
-
-.heroPanel {
-  background:
-    radial-gradient(circle at 86% 18%, color-mix(in oklab, var(--accent-electric) 16%, transparent) 0%, transparent 38%),
-    linear-gradient(180deg, color-mix(in oklab, var(--surface-ink) 94%, black) 0%, var(--surface-ink) 100%);
-}
-
-.projectsPanel {
-  background:
-    radial-gradient(circle at 10% 80%, color-mix(in oklab, var(--accent-warm) 18%, transparent) 0%, transparent 36%),
-    linear-gradient(180deg, color-mix(in oklab, var(--surface-ink) 94%, black) 0%, var(--surface-ink) 100%);
-}
-
-.writingsPanel {
-  background:
-    radial-gradient(circle at 82% 16%, color-mix(in oklab, var(--accent-electric) 15%, transparent) 0%, transparent 34%),
-    linear-gradient(180deg, color-mix(in oklab, var(--surface-ink) 94%, black) 0%, var(--surface-ink) 100%);
-}
-
-.curationsPanel {
-  background:
-    radial-gradient(circle at 16% 82%, color-mix(in oklab, var(--accent-warm) 14%, transparent) 0%, transparent 34%),
-    linear-gradient(180deg, color-mix(in oklab, var(--surface-ink) 96%, black) 0%, black 100%);
+  background: #08090c;
 }
 
 .heroStage,
@@ -92,69 +129,85 @@
 
 .heroStage {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(18rem, 0.9fr);
-  gap: clamp(1rem, 2.2vw, 2.6rem);
-  align-items: stretch;
+  grid-template-columns: minmax(0, 1.12fr) minmax(17rem, 0.88fr);
+  gap: clamp(1rem, 2.4vw, 2.7rem);
+  align-items: end;
 }
 
 .heroCopy {
   display: grid;
-  align-content: center;
-  gap: clamp(0.7rem, 1.7vh, 1.2rem);
+  align-content: end;
+  gap: clamp(0.75rem, 1.75vh, 1.25rem);
   min-width: 0;
-  max-width: 70rem;
 }
 
 .heroDisplay {
   display: grid;
-  gap: 0.3rem;
-  font-size: clamp(2.4rem, 6.8vw, 7.6rem);
-  line-height: 0.92;
-  letter-spacing: -0.045em;
+  gap: 0.28rem;
+  font-size: clamp(2.9rem, 7.7vw, 8.7rem);
+  line-height: 0.88;
+  letter-spacing: -0.055em;
 }
 
 .heroSubtitle {
   max-width: 56ch;
-  color: color-mix(in oklab, var(--surface-paper) 78%, transparent);
-  font-size: clamp(0.96rem, 0.93rem + 0.28vw, 1.16rem);
-  line-height: 1.72;
+  color: color-mix(in oklab, var(--surface-paper) 80%, transparent);
+  font-size: clamp(0.98rem, 0.95rem + 0.28vw, 1.18rem);
+  line-height: 1.74;
 }
 
-.heroFigure {
-  position: relative;
-  margin: 0;
+.heroInfoRail {
   min-width: 0;
-  height: 100%;
-  min-height: clamp(18rem, 47vh, 33rem);
+  display: grid;
+  align-content: end;
+  gap: 0.74rem;
+}
+
+.heroInfoCard {
+  display: grid;
+  gap: 0.42rem;
+  padding: 0.84rem 0.94rem;
   border: 1px solid rgba(255, 255, 255, 0.18);
-  overflow: hidden;
-  background: color-mix(in oklab, var(--surface-hero) 86%, black);
+  background: rgba(9, 9, 12, 0.42);
+  backdrop-filter: blur(8px);
 }
 
-.heroMedia {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: saturate(0.86) contrast(1.02) brightness(0.82);
-}
-
-.heroFigure figcaption {
-  position: absolute;
-  left: 1rem;
-  right: 1rem;
-  bottom: 1rem;
-  padding: 0.62rem 0.78rem;
-  background: color-mix(in oklab, var(--surface-hero) 56%, transparent);
-  color: var(--surface-paper);
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
+.heroInfoLabel {
+  font-size: 0.64rem;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
+  color: color-mix(in oklab, var(--surface-paper) 62%, var(--accent-electric));
+}
+
+.heroInfoValue {
+  font-size: clamp(1.05rem, 1.4vw, 1.4rem);
+  line-height: 1.1;
+  font-family: var(--font-serif);
+}
+
+.heroTagList {
+  display: grid;
+  gap: 0.48rem;
+}
+
+.heroTag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.85rem;
+  padding: 0.26rem 0.66rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(9, 9, 12, 0.34);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--surface-paper) 76%, transparent);
 }
 
 .panelFoot {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.7rem 1.2rem;
+  gap: 0.72rem 1.2rem;
   font-size: 0.68rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -163,29 +216,29 @@
 
 .projectsStage {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(19rem, 0.95fr);
-  gap: clamp(1rem, 2.2vw, 2.4rem);
+  grid-template-columns: minmax(0, 0.92fr) minmax(19rem, 1.08fr);
+  gap: clamp(1rem, 2.2vw, 2.3rem);
   align-items: stretch;
 }
 
 .projectsMain,
 .writingsMain,
 .curationsMain {
+  min-width: 0;
   display: grid;
   align-content: center;
-  gap: clamp(0.66rem, 1.5vh, 1.04rem);
-  min-width: 0;
+  gap: clamp(0.68rem, 1.55vh, 1.05rem);
 }
 
 .panelDisplay {
-  font-size: clamp(2.3rem, 5.5vw, 6.4rem);
+  font-size: clamp(2.4rem, 5.8vw, 6.5rem);
   line-height: 0.9;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.043em;
 }
 
 .panelLead {
   max-width: 44ch;
-  color: color-mix(in oklab, var(--surface-paper) 74%, transparent);
+  color: color-mix(in oklab, var(--surface-paper) 76%, transparent);
   line-height: 1.66;
 }
 
@@ -200,16 +253,18 @@
   grid-template-columns: auto 1fr;
   gap: 0.66rem;
   align-items: center;
-  padding: 0.46rem 0.58rem;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 0.5rem 0.64rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: color-mix(in oklab, var(--surface-paper) 76%, transparent);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 0.74rem;
+  background: rgba(9, 9, 12, 0.34);
   transition:
     transform 220ms var(--ease-out-expo),
     color 220ms ease,
-    border-color 220ms ease;
+    border-color 220ms ease,
+    background-color 220ms ease;
 }
 
 .projectMenuItem:hover,
@@ -217,15 +272,16 @@
 .projectMenuActive {
   transform: translateX(6px);
   color: var(--surface-paper);
-  border-color: color-mix(in oklab, var(--accent-warm) 52%, rgba(255, 255, 255, 0.25));
+  border-color: color-mix(in oklab, var(--accent-warm) 56%, rgba(255, 255, 255, 0.26));
+  background: rgba(11, 11, 14, 0.48);
 }
 
 .projectsVisual {
   position: relative;
   min-width: 0;
-  border: 1px solid rgba(255, 255, 255, 0.18);
   overflow: hidden;
-  background: color-mix(in oklab, var(--surface-hero) 86%, black);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(9, 9, 12, 0.48);
 }
 
 .projectsVisual img {
@@ -242,8 +298,8 @@
   display: flex;
   justify-content: space-between;
   gap: 0.8rem;
-  padding: 0.58rem 0.74rem;
-  background: color-mix(in oklab, var(--surface-hero) 56%, transparent);
+  padding: 0.58rem 0.75rem;
+  background: rgba(8, 8, 10, 0.58);
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -251,7 +307,7 @@
 
 .writingsStage {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(17rem, 0.94fr);
+  grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
   gap: clamp(1rem, 2.1vw, 2.2rem);
   align-items: stretch;
 }
@@ -268,17 +324,19 @@
   display: grid;
   grid-template-rows: auto auto 1fr auto;
   gap: 0.56rem;
+  padding: 0.9rem 0.98rem 0.96rem;
   border: 1px solid rgba(255, 255, 255, 0.18);
-  background: color-mix(in oklab, var(--surface-hero) 30%, transparent);
-  padding: 0.88rem 0.95rem 0.94rem;
+  background: rgba(9, 9, 12, 0.46);
   transition:
     transform 220ms var(--ease-out-expo),
-    border-color 220ms ease;
+    border-color 220ms ease,
+    background-color 220ms ease;
 }
 
 .writingCard:hover {
   transform: translateY(-4px);
-  border-color: color-mix(in oklab, var(--accent-electric) 54%, rgba(255, 255, 255, 0.22));
+  border-color: color-mix(in oklab, var(--accent-electric) 56%, rgba(255, 255, 255, 0.22));
+  background: rgba(10, 10, 13, 0.58);
 }
 
 .writingMeta {
@@ -288,16 +346,16 @@
   font-size: 0.66rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: color-mix(in oklab, var(--surface-paper) 64%, transparent);
+  color: color-mix(in oklab, var(--surface-paper) 66%, transparent);
 }
 
 .writingCard h3 {
-  font-size: clamp(1.22rem, 1.95vw, 2rem);
+  font-size: clamp(1.26rem, 2vw, 2.08rem);
   line-height: 0.98;
 }
 
 .writingCard p {
-  color: color-mix(in oklab, var(--surface-paper) 72%, transparent);
+  color: color-mix(in oklab, var(--surface-paper) 74%, transparent);
   line-height: 1.58;
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -333,7 +391,7 @@
   display: grid;
   grid-template-rows: minmax(10rem, 46%) auto;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  background: color-mix(in oklab, var(--surface-hero) 36%, black);
+  background: rgba(9, 9, 12, 0.62);
   overflow: hidden;
   cursor: pointer;
   outline: none;
@@ -346,12 +404,12 @@
 .curationCard:hover,
 .curationCard:focus-visible {
   transform: translateY(-4px);
-  border-color: color-mix(in oklab, var(--accent-warm) 52%, rgba(255, 255, 255, 0.28));
-  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.24);
+  border-color: color-mix(in oklab, var(--accent-warm) 54%, rgba(255, 255, 255, 0.3));
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.28);
 }
 
 .curationCardChecked {
-  border-color: color-mix(in oklab, var(--accent-electric) 58%, rgba(255, 255, 255, 0.28));
+  border-color: color-mix(in oklab, var(--accent-electric) 56%, rgba(255, 255, 255, 0.3));
 }
 
 .curationCard img {
@@ -370,9 +428,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  background: color-mix(in oklab, var(--surface-hero) 62%, transparent);
-  color: color-mix(in oklab, var(--surface-paper) 70%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(10, 10, 12, 0.5);
+  color: color-mix(in oklab, var(--surface-paper) 72%, transparent);
   cursor: pointer;
   transition:
     border-color 220ms ease,
@@ -389,14 +447,13 @@
 .curationCheckActive {
   border-color: var(--accent-warm);
   color: var(--surface-paper);
-  background: color-mix(in oklab, var(--accent-warm) 38%, transparent);
+  background: color-mix(in oklab, var(--accent-warm) 36%, transparent);
 }
 
 .curationBody {
   display: grid;
   grid-template-rows: auto auto 1fr;
   gap: 0.42rem;
-  min-width: 0;
   padding: 0.76rem 0.8rem 0.92rem;
 }
 
@@ -410,7 +467,7 @@
   font-size: 0.62rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: color-mix(in oklab, var(--surface-paper) 66%, var(--accent-electric));
+  color: color-mix(in oklab, var(--surface-paper) 68%, var(--accent-electric));
 }
 
 .curationBody h3 {
@@ -419,7 +476,7 @@
 }
 
 .curationBody p {
-  color: color-mix(in oklab, var(--surface-paper) 72%, transparent);
+  color: color-mix(in oklab, var(--surface-paper) 74%, transparent);
   line-height: 1.52;
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -502,7 +559,11 @@
   line-height: 1.8;
 }
 
-@media (max-width: 1380px) {
+@media (max-width: 1400px) {
+  .heroStage {
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 0.8fr);
+  }
+
   .curationPair {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -526,24 +587,23 @@
 
   .heroDisplay,
   .panelDisplay {
-    font-size: clamp(2.15rem, 7.8vw, 4.8rem);
+    font-size: clamp(2.2rem, 7.8vw, 5rem);
   }
 
-  .heroFigure {
-    min-height: clamp(13rem, 34vh, 19rem);
-    height: clamp(13rem, 34vh, 19rem);
+  .heroInfoRail {
+    align-content: start;
+  }
+
+  .heroTagList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .projectsVisual {
-    min-height: clamp(14rem, 34vh, 21rem);
+    min-height: clamp(14rem, 34vh, 22rem);
   }
 
   .writingStack {
     grid-template-rows: none;
-  }
-
-  .curationPair {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .panelFoot {
@@ -553,18 +613,19 @@
 
 @media (max-width: 760px) {
   .panelShell {
-    --panel-safe-top: 4.6rem;
-    --panel-safe-bottom: 8.6rem;
+    --panel-safe-top: 4.8rem;
+    --panel-safe-bottom: 8.8rem;
   }
 
   .panelShell :global(.container) {
-    width: min(calc(100% - 1.4rem), 1620px);
+    width: min(calc(100% - 1.5rem), 1620px);
   }
 
   .panelTopline {
     font-size: 0.62rem;
   }
 
+  .heroTagList,
   .curationPair {
     grid-template-columns: 1fr;
   }

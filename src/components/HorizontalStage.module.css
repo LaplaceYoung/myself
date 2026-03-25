@@ -1,22 +1,29 @@
 .horizontalStage {
   position: relative;
   width: 100%;
-  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   isolation: isolate;
   background: var(--surface-paper);
 }
 
+.track {
+  display: flex;
+  height: 100%;
+  width: max-content;
+  will-change: transform;
+}
+
 .panel {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  flex: 0 0 100vw;
+  width: 100vw;
   height: 100dvh;
   overflow: hidden;
-  will-change: transform, opacity;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .panel {
+  .track {
     transition: none !important;
   }
 }

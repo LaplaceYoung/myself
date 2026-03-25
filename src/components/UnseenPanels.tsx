@@ -9,6 +9,37 @@ import { applyFallbackImage, localAsset, resolveImageUrl } from '../utils/image'
 
 const cleanText = (value: string) => value.replace(/\\u[0-9a-fA-F]{4}/g, '').trim();
 
+type PanelBackdropProps = {
+  src: string;
+  alt: string;
+  className?: string;
+};
+
+const PanelBackdrop = ({ src, alt, className }: PanelBackdropProps) => {
+  if (!src) {
+    return null;
+  }
+
+  return (
+    <motion.div
+      key={src}
+      className={`${styles.panelBackdrop} ${className ?? ''}`}
+      initial={{ opacity: 0.25, scale: 1.06 }}
+      animate={{ opacity: 1, scale: 1.02 }}
+      transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+      aria-hidden="true"
+    >
+      <img
+        src={src}
+        alt={alt}
+        onError={(event) => applyFallbackImage(event.currentTarget)}
+        referrerPolicy="no-referrer"
+      />
+      <div className={styles.panelBackdropVeil} />
+    </motion.div>
+  );
+};
+
 export const HeroPanel = () => {
   const { t } = useLanguage();
   const prefersReducedMotion = useReducedMotion();
@@ -18,7 +49,32 @@ export const HeroPanel = () => {
 
   return (
     <div className={`${styles.panelShell} ${styles.heroPanel}`}>
+      <div className={styles.heroVideoBackdrop} aria-hidden="true">
+        <video
+          src={heroVideo}
+          className={styles.heroVideo}
+          autoPlay={!prefersReducedMotion}
+          loop
+          muted
+          playsInline
+          preload="metadata"
+          poster={heroPoster}
+          onError={() => setVideoFailed(true)}
+        />
+        {videoFailed ? (
+          <img
+            src={heroPoster}
+            alt="Hero visual"
+            className={styles.heroBackdropFallback}
+            onError={(event) => applyFallbackImage(event.currentTarget)}
+            referrerPolicy="no-referrer"
+          />
+        ) : null}
+        <div className={styles.heroVignette} />
+      </div>
+
       <div className={styles.panelTexture} />
+
       <div className="container">
         <div className={styles.panelTopline}>
           <span>[YEAR IN REVIEW]</span>
@@ -35,34 +91,17 @@ export const HeroPanel = () => {
             <p className={styles.heroSubtitle}>{t('hero.subtitle')}</p>
           </div>
 
-          <motion.figure
-            className={styles.heroFigure}
-            initial={{ opacity: 0, x: 30, scale: 0.96 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <video
-              src={heroVideo}
-              className={styles.heroMedia}
-              autoPlay={!prefersReducedMotion}
-              loop
-              muted
-              playsInline
-              preload="metadata"
-              poster={heroPoster}
-              onError={() => setVideoFailed(true)}
-            />
-            {videoFailed ? (
-              <img
-                src={heroPoster}
-                alt="Hero visual"
-                className={styles.heroMedia}
-                onError={(event) => applyFallbackImage(event.currentTarget)}
-                referrerPolicy="no-referrer"
-              />
-            ) : null}
-            <figcaption>{t('hero.overlayMeta')}</figcaption>
-          </motion.figure>
+          <aside className={styles.heroInfoRail}>
+            <div className={styles.heroInfoCard}>
+              <span className={styles.heroInfoLabel}>{t('hero.overlayLabel')}</span>
+              <span className={styles.heroInfoValue}>{t('hero.overlayMeta')}</span>
+            </div>
+            <div className={styles.heroTagList}>
+              <span className={styles.heroTag}>{t('hero.pillStory')}</span>
+              <span className={styles.heroTag}>{t('hero.pillMotion')}</span>
+              <span className={styles.heroTag}>{t('hero.pillCraft')}</span>
+            </div>
+          </aside>
         </div>
 
         <div className={styles.panelFoot}>
@@ -89,7 +128,13 @@ export const ProjectsPanel = () => {
 
   return (
     <div className={`${styles.panelShell} ${styles.projectsPanel}`}>
+      <PanelBackdrop
+        src={resolveImageUrl(activeProject.image)}
+        alt={`${activeProject.title} background`}
+        className={styles.projectsBackdrop}
+      />
       <div className={styles.panelTexture} />
+
       <div className="container">
         <div className={styles.panelTopline}>
           <span>[PROJECTS]</span>
@@ -123,9 +168,9 @@ export const ProjectsPanel = () => {
           <motion.div
             key={activeProject.id}
             className={styles.projectsVisual}
-            initial={{ opacity: 0, x: 28 }}
+            initial={{ opacity: 0, x: 22 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.62, ease: [0.16, 1, 0.3, 1] }}
           >
             <img
               src={resolveImageUrl(activeProject.image)}
@@ -155,9 +200,15 @@ export const WritingsPanel = () => {
     return null;
   }
 
+  const writingBackdrop = visibleWritings[0]?.image
+    ? resolveImageUrl(visibleWritings[0].image)
+    : localAsset('uploads/mymd_promo_v2.png');
+
   return (
     <div className={`${styles.panelShell} ${styles.writingsPanel}`}>
+      <PanelBackdrop src={writingBackdrop} alt="Writings background" className={styles.writingsBackdrop} />
       <div className={styles.panelTexture} />
+
       <div className="container">
         <div className={styles.panelTopline}>
           <span>[WRITINGS]</span>
@@ -205,6 +256,7 @@ export const CurationsPanel = () => {
     return null;
   }
 
+  const backdropSource = openedItem?.image ?? visibleCurations[0]?.image ?? localAsset('uploads/mymd_promo_v2.png');
   const isSelected = (id: number) => selectedIds.includes(id);
 
   const toggleSelect = (id: number) => {
@@ -214,7 +266,9 @@ export const CurationsPanel = () => {
   return (
     <>
       <div className={`${styles.panelShell} ${styles.curationsPanel}`}>
+        <PanelBackdrop src={resolveImageUrl(backdropSource)} alt="Curations background" className={styles.curationsBackdrop} />
         <div className={styles.panelTexture} />
+
         <div className="container">
           <div className={styles.panelTopline}>
             <span>[CURATIONS]</span>
@@ -246,11 +300,9 @@ export const CurationsPanel = () => {
                       }
                     }}
                     data-cursor-text="OPEN"
-                    initial={{ opacity: 0, y: 36, clipPath: 'inset(8% 0 0 0)' }}
-                    whileInView={{ opacity: 1, y: 0, clipPath: 'inset(0 0 0 0)' }}
-                    viewport={{ once: true, amount: 0.4 }}
-                    whileHover={{ y: -5 }}
-                    transition={{ duration: 0.54, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.45, delay: index * 0.06, ease: [0.16, 1, 0.3, 1] }}
                   >
                     <button
                       type="button"
@@ -260,7 +312,7 @@ export const CurationsPanel = () => {
                         toggleSelect(item.id);
                       }}
                       data-cursor-text="PICK"
-                      aria-label={`${language === 'zh' ? '选择' : 'Select'} ${cleanText(item.title)}`}
+                      aria-label={`Toggle selection for ${cleanText(item.title)}`}
                     >
                       <span>{checked ? '01' : '00'}</span>
                     </button>
@@ -275,7 +327,7 @@ export const CurationsPanel = () => {
                     <div className={styles.curationBody}>
                       <div className={styles.curationTopline}>
                         <span>{cleanText(item.type)}</span>
-                        <span>{checked ? (language === 'zh' ? '已选中' : 'SELECTED') : language === 'zh' ? '详情' : 'DETAIL'}</span>
+                        <span>{checked ? (language === 'zh' ? '已选' : 'SELECTED') : language === 'zh' ? '详情' : 'DETAIL'}</span>
                       </div>
                       <h3>{cleanText(item.title)}</h3>
                       <p>{cleanText(item.description)}</p>
@@ -309,9 +361,9 @@ export const CurationsPanel = () => {
               >
                 <motion.div
                   className={styles.curationModal}
-                  initial={{ opacity: 0, y: 28, scale: 0.98 }}
+                  initial={{ opacity: 0, y: 24, scale: 0.985 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 16, scale: 0.98 }}
+                  exit={{ opacity: 0, y: 14, scale: 0.985 }}
                   transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                   onClick={(event) => event.stopPropagation()}
                 >
