@@ -1,17 +1,31 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import styles from './Navigation.module.css';
 import { useLanguage } from '../LanguageContext';
+import { HORIZONTAL_GOTO_EVENT, HORIZONTAL_PROGRESS_EVENT } from './HorizontalStage';
+
+type HorizontalProgressPayload = {
+  progress: number;
+  activeId: string;
+  index: number;
+  total: number;
+};
 
 const Navigation = () => {
   const [activeSection, setActiveSection] = useState('hero');
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [totalScreens, setTotalScreens] = useState(4);
   const { t, language, toggleLanguage } = useLanguage();
   const location = useLocation();
 
   useEffect(() => {
     if (location.pathname !== '/') {
+      return;
+    }
+
+    if (document.querySelector('[data-horizontal-root="true"]')) {
       return;
     }
 
@@ -45,6 +59,10 @@ const Navigation = () => {
     }
 
     const handleScroll = () => {
+      if (document.querySelector('[data-horizontal-root="true"]')) {
+        return;
+      }
+
       const root = document.documentElement;
       const max = root.scrollHeight - root.clientHeight;
       const nextValue = max > 0 ? window.scrollY / max : 0;
@@ -53,7 +71,34 @@ const Navigation = () => {
 
     handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('resize', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (location.pathname !== '/') {
+      return;
+    }
+
+    const onHorizontalProgress = (event: Event) => {
+      const detail = (event as CustomEvent<HorizontalProgressPayload>).detail;
+      if (!detail) {
+        return;
+      }
+
+      setActiveSection(detail.activeId);
+      setScrollProgress(Math.max(0, Math.min(1, detail.progress)));
+      setActiveIndex(Math.max(0, detail.index));
+      setTotalScreens(Math.max(1, detail.total));
+    };
+
+    window.addEventListener(HORIZONTAL_PROGRESS_EVENT, onHorizontalProgress as EventListener);
+    return () =>
+      window.removeEventListener(HORIZONTAL_PROGRESS_EVENT, onHorizontalProgress as EventListener);
   }, [location.pathname]);
 
   if (location.pathname !== '/') {
@@ -66,12 +111,22 @@ const Navigation = () => {
     { id: 'writings', label: t('nav.writings'), short: '02' },
     { id: 'curations', label: t('nav.curations'), short: '03' },
   ];
+  const progressLabel = String(Math.round(scrollProgress * 100)).padStart(2, '0');
 
   const scrollToSection = (id: string) => {
     const section = document.getElementById(id);
-    if (section) {
-      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const horizontalRoot = document.querySelector<HTMLElement>('[data-horizontal-root="true"]');
+
+    if (horizontalRoot) {
+      window.dispatchEvent(new CustomEvent(HORIZONTAL_GOTO_EVENT, { detail: { id } }));
+      return;
     }
+
+    if (!section) {
+      return;
+    }
+
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   return (
@@ -81,15 +136,32 @@ const Navigation = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.95, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className={styles.navContainer}>
+      <div className={styles.progressHud}>
+        <span className={styles.hudLabel}>[INDEX]</span>
         <div className={styles.progressRail} aria-hidden="true">
           <motion.div
             className={styles.progressBar}
             animate={{ scaleX: scrollProgress }}
             transition={{ duration: 0.18, ease: 'linear' }}
           />
+          <div className={styles.progressTicks}>
+            {navItems.map((item, index) => (
+              <button
+                key={item.id}
+                type="button"
+                className={`${styles.tickBtn} ${activeIndex === index ? styles.tickActive : ''}`}
+                onClick={() => scrollToSection(item.id)}
+                data-cursor-text={item.short}
+              >
+                {item.short}
+              </button>
+            ))}
+          </div>
         </div>
+        <span className={styles.progressValue}>[{progressLabel}%]</span>
+      </div>
 
+      <div className={styles.navContainer}>
         <div className={styles.navList}>
           {navItems.map((item) => (
             <Link
@@ -108,6 +180,10 @@ const Navigation = () => {
           ))}
         </div>
 
+        <div className={styles.screenCounter}>
+          {String(activeIndex + 1).padStart(2, '0')} / {String(totalScreens).padStart(2, '0')}
+        </div>
+
         <button
           type="button"
           className={styles.langToggle}
@@ -124,3 +200,4 @@ const Navigation = () => {
 };
 
 export default Navigation;
+

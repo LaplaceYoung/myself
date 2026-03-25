@@ -3,7 +3,7 @@
   background: var(--surface-ink);
   color: var(--surface-paper);
   overflow: visible;
-  padding-bottom: var(--space-xl);
+  padding-bottom: calc(var(--space-2xl) + 6rem);
 }
 
 .stage {
@@ -32,7 +32,8 @@
 }
 
 .header {
-  position: relative;
+  position: sticky;
+  top: clamp(3.6rem, 8vh, 6.2rem);
   z-index: 2;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(20rem, 30rem);
@@ -88,7 +89,7 @@
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: x proximity;
   padding: 0 max(var(--space-md), calc((100vw - var(--container-width)) / 2 + var(--space-md)))
-    var(--space-sm);
+    max(var(--space-md), 6.2rem);
 }
 
 .track {
@@ -98,7 +99,8 @@
   width: max-content;
   min-width: 100%;
   padding-right: max(12vw, var(--space-lg));
-  padding-bottom: var(--space-md);
+  padding-bottom: max(var(--space-md), 2.6rem);
+  will-change: transform;
 }
 
 .card {
@@ -113,7 +115,13 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   cursor: pointer;
   scroll-snap-align: start;
-  transition: transform 320ms var(--ease-out-expo);
+  transition:
+    transform 320ms var(--ease-out-expo),
+    opacity 240ms ease;
+}
+
+.cardDimmed {
+  opacity: 0.62;
 }
 
 .depthA {
@@ -222,13 +230,6 @@
   background: color-mix(in oklab, var(--surface-paper) 20%, transparent);
 }
 
-.progressBarStatic {
-  display: block;
-  width: 24%;
-  height: 100%;
-  background: var(--accent-warm);
-}
-
 .modalOverlay {
   position: fixed;
   inset: 0;
@@ -291,6 +292,10 @@
 }
 
 @media (max-width: 980px) {
+  .curationsSection {
+    padding-bottom: calc(var(--space-xl) + 5.2rem);
+  }
+
   .stage {
     position: relative;
     min-height: auto;
@@ -298,6 +303,8 @@
   }
 
   .header {
+    position: relative;
+    top: auto;
     grid-template-columns: 1fr;
   }
 
@@ -309,6 +316,7 @@
 
   .track {
     width: auto;
+    transform: none !important;
     padding-right: var(--space-sm);
   }
 
